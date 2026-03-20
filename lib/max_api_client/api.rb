@@ -72,9 +72,7 @@ module MaxApiClient
     alias addChatMembers add_chat_members
 
     def get_chat_members(chat_id, extra = {})
-      query = extra.dup
-      query[:user_ids] = query[:user_ids].join(",") if query[:user_ids].is_a?(Array)
-      raw.chats.get_chat_members(chat_id:, **query)
+      raw.chats.get_chat_members(chat_id:, **csv_query(extra, :user_ids))
     end
     alias getChatMembers get_chat_members
 
@@ -109,21 +107,17 @@ module MaxApiClient
     alias leaveChat leave_chat
 
     def send_message_to_chat(chat_id, text, extra = nil)
-      response = raw.messages.send(chat_id:, text:, **(extra || {}))
-      response.fetch("message") { response.fetch(:message) }
+      message_from(raw.messages.send(chat_id:, text:, **(extra || {})))
     end
     alias sendMessageToChat send_message_to_chat
 
     def send_message_to_user(user_id, text, extra = nil)
-      response = raw.messages.send(user_id:, text:, **(extra || {}))
-      response.fetch("message") { response.fetch(:message) }
+      message_from(raw.messages.send(user_id:, text:, **(extra || {})))
     end
     alias sendMessageToUser send_message_to_user
 
     def get_messages(chat_id, extra = {})
-      query = extra.dup
-      query[:message_ids] = query[:message_ids].join(",") if query[:message_ids].is_a?(Array)
-      raw.messages.get(chat_id:, **query)
+      raw.messages.get(chat_id:, **csv_query(extra, :message_ids))
     end
     alias getMessages get_messages
 
@@ -182,6 +176,14 @@ module MaxApiClient
       return types unless types.is_a?(Array)
 
       types.join(",")
+    end
+
+    def csv_query(query, key)
+      query.merge(key => normalize_types(query[key]))
+    end
+
+    def message_from(response)
+      response.fetch("message") { response.fetch(:message) }
     end
   end
 end

@@ -2,8 +2,16 @@
 
 module MaxApiClient
   class BaseApi
+    HTTP_METHODS = %i[get post put patch delete].freeze
+
     def initialize(client)
       @client = client
+    end
+
+    HTTP_METHODS.each do |name|
+      define_method(name) do |path, query: nil, body: nil, path_params: nil|
+        call_api(name, path, query:, body:, path_params:)
+      end
     end
 
     private
@@ -17,24 +25,8 @@ module MaxApiClient
       result[:data]
     end
 
-    def _get(path, query: nil, path_params: nil)
-      call_api("GET", path, query:, path_params:)
-    end
-
-    def _post(path, query: nil, body: nil, path_params: nil)
-      call_api("POST", path, query:, body:, path_params:)
-    end
-
-    def _put(path, query: nil, body: nil, path_params: nil)
-      call_api("PUT", path, query:, body:, path_params:)
-    end
-
-    def _patch(path, query: nil, body: nil, path_params: nil)
-      call_api("PATCH", path, query:, body:, path_params:)
-    end
-
-    def _delete(path, query: nil, body: nil, path_params: nil)
-      call_api("DELETE", path, query:, body:, path_params:)
+    def compact_nil(hash)
+      hash.reject { |_key, value| value.nil? }
     end
   end
 end

@@ -59,7 +59,7 @@ class TestMaxApiClient < Minitest::Test
     response = api.send_message_to_chat(123, "Hello", format: "markdown")
 
     assert_equal "Hello", response.dig("body", "text")
-    assert_equal "POST", requests.first[:method]
+    assert_equal :post, requests.first[:method]
     assert_equal URI("https://platform-api.max.ru/messages?chat_id=123"), requests.first[:url]
     assert_equal({ text: "Hello", format: "markdown" }, requests.first[:body])
   end
@@ -94,6 +94,22 @@ class TestMaxApiClient < Minitest::Test
     assert_equal 2, requests.size
   end
 
+  def test_remove_chat_member_preserves_false_block_flag
+    api, requests = build_api([{ status: 200, data: {} }])
+
+    api.remove_chat_member(10, 42, block: false)
+
+    assert_equal({ user_id: 42, block: false }, requests.first[:body])
+  end
+
+  def test_pin_message_preserves_false_notify_flag
+    api, requests = build_api([{ status: 200, data: {} }])
+
+    api.pin_message(10, "mid", notify: false)
+
+    assert_equal({ message_id: "mid", notify: false }, requests.first[:body])
+  end
+
   def test_upload_image_from_url_returns_attachment_without_network_upload
     api, requests = build_api
 
@@ -121,7 +137,7 @@ class TestMaxApiClient < Minitest::Test
       assert_equal({ type: "file", payload: { token: "upload-token" } }, attachment.to_h)
       assert_equal URI("https://platform-api.max.ru/uploads?type=file"), requests[0][:url]
       assert_equal URI("https://upload.example.test/files"), requests[1][:url]
-      assert_equal "POST", requests[1][:method]
+      assert_equal :post, requests[1][:method]
       assert_equal "payload", requests[1][:raw_body]
     end
   end

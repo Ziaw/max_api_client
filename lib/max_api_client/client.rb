@@ -3,6 +3,13 @@
 module MaxApiClient
   class Client
     DEFAULT_BASE_URL = "https://platform-api.max.ru"
+    REQUEST_CLASSES = {
+      get: Net::HTTP::Get,
+      post: Net::HTTP::Post,
+      put: Net::HTTP::Put,
+      patch: Net::HTTP::Patch,
+      delete: Net::HTTP::Delete
+    }.freeze
 
     attr_reader :token, :base_url
 
@@ -16,8 +23,28 @@ module MaxApiClient
 
     def call(method:, path: nil, query: nil, body: nil, path_params: nil, headers: nil, url: nil, raw_body: nil,
              parse_json: true)
-      request = {
-        method: method.to_s.upcase,
+      request = build_request(
+        method:,
+        path:,
+        query:,
+        body:,
+        path_params:,
+        headers:,
+        url:,
+        raw_body:,
+        parse_json:
+      )
+
+      return @adapter.call(request) if @adapter
+
+      perform_request(request)
+    end
+
+    private
+
+    def build_request(method:, path:, query:, body:, path_params:, headers:, url:, raw_body:, parse_json:)
+      {
+        method: method.to_sym,
         url: build_url(path:, path_params:, query:, url:),
         path: path,
         path_params: path_params,
@@ -27,13 +54,7 @@ module MaxApiClient
         headers: default_headers(headers, body:, raw_body:),
         parse_json: parse_json
       }
-
-      return @adapter.call(request) if @adapter
-
-      perform_request(request)
     end
-
-    private
 
     def build_url(path:, path_params:, query:, url:)
       uri = if url
@@ -43,7 +64,7 @@ module MaxApiClient
             end
 
       params = URI.decode_www_form(String(uri.query))
-      (query || {}).each do |key, value|
+      query.to_h.each do |key, value|
         next if value.nil? || value == false
 
         params << [key.to_s, value.to_s]
@@ -53,65 +74,61 @@ module MaxApiClient
     end
 
     def expand_path(path, path_params)
-      expanded = path.dup
-      (path_params || {}).each do |key, value|
+      path_params.to_h.each_with_object(path.dup) do |(key, value), expanded|
         expanded.gsub!("{#{key}}", URI.encode_www_form_component(value.to_s))
       end
-      expanded
     end
 
     def default_headers(headers, body:, raw_body:)
-      result = {
+      {
         "Authorization" => token.to_s
-      }
-      result["Content-Type"] = "application/json" if body && raw_body.nil?
-      result.merge!(headers || {})
-      result
+      }.tap do |result|
+        result["Content-Type"] = "application/json" if body && raw_body.nil?
+        result.merge!(headers.to_h)
+      end
     end
 
     def perform_request(request)
       uri = request.fetch(:url)
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = uri.scheme == "https"
-      http.open_timeout = @open_timeout if @open_timeout
-      http.read_timeout = @read_timeout if @read_timeout
-
-      req = net_http_request_class(request.fetch(:method)).new(uri)
-      request.fetch(:headers).each do |key, value|
-        req[key] = value
-      end
-
-      if request[:raw_body]
-        req.body = request[:raw_body]
-      elsif request[:body]
-        req.body = JSON.generate(request[:body])
-      end
-
-      response = http.request(req)
-      body = response.body.to_s
-      data = if request[:parse_json] && !body.empty?
-               JSON.parse(body)
-             elsif request[:parse_json]
-               {}
-             else
-               body
-             end
+      response = configured_http(uri).request(build_http_request(request, uri))
 
       {
         status: response.code.to_i,
-        data: data,
+        data: parse_response_body(response.body.to_s, parse_json: request[:parse_json]),
         headers: response.to_hash
       }
     end
 
-    def net_http_request_class(method)
-      {
-        "GET" => Net::HTTP::Get,
-        "POST" => Net::HTTP::Post,
-        "PUT" => Net::HTTP::Put,
-        "PATCH" => Net::HTTP::Patch,
-        "DELETE" => Net::HTTP::Delete
-      }.fetch(method)
+    def configured_http(uri)
+      Net::HTTP.new(uri.host, uri.port).tap do |http|
+        http.use_ssl = uri.scheme == "https"
+        http.open_timeout = @open_timeout if @open_timeout
+        http.read_timeout = @read_timeout if @read_timeout
+      end
+    end
+
+    def build_http_request(request, uri)
+      REQUEST_CLASSES.fetch(request.fetch(:method)).new(uri).tap do |http_request|
+        request.fetch(:headers).each do |key, value|
+          http_request[key] = value
+        end
+
+        http_request.body = request_body(request)
+      end
+    end
+
+    def request_body(request)
+      return request[:raw_body] if request[:raw_body]
+      return JSON.generate(request[:body]) if request[:body]
+
+      nil
+    end
+
+    def parse_response_body(body, parse_json:)
+      return body unless parse_json
+      return {} if body.empty?
+
+      JSON.parse(body)
     end
   end
 end

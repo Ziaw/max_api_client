@@ -3,6 +3,11 @@
 module MaxApiClient
   class Upload
     DEFAULT_TIMEOUT = 20
+    BINARY_HEADERS = {
+      "Content-Type" => "application/x-binary; charset=x-user-defined",
+      "X-Uploading-Mode" => "parallel",
+      "Connection" => "keep-alive"
+    }.freeze
 
     def initialize(api)
       @api = api
@@ -11,54 +16,48 @@ module MaxApiClient
     def image(source: nil, url: nil, timeout: DEFAULT_TIMEOUT, filename: nil)
       return { url: } if url
 
-      file = file_from_source(source, filename:)
-      upload("image", file, timeout:)
+      upload_from_source("image", source, timeout:, filename:)
     end
 
     def video(source:, timeout: DEFAULT_TIMEOUT, filename: nil)
-      file = file_from_source(source, filename:)
-      upload("video", file, timeout:)
+      upload_from_source("video", source, timeout:, filename:)
     end
 
     def audio(source:, timeout: DEFAULT_TIMEOUT, filename: nil)
-      file = file_from_source(source, filename:)
-      upload("audio", file, timeout:)
+      upload_from_source("audio", source, timeout:, filename:)
     end
 
     def file(source:, timeout: DEFAULT_TIMEOUT, filename: nil)
-      file = file_from_source(source, filename:)
-      upload("file", file, timeout:)
+      upload_from_source("file", source, timeout:, filename:)
     end
 
     private
 
     attr_reader :api
 
+    def upload_from_source(type, source, timeout:, filename:)
+      upload(type, file_from_source(source, filename:), timeout:)
+    end
+
     def upload(type, file, timeout:)
       response = api.raw.uploads.get_upload_url(type:)
-      upload_url = response.fetch("url") { response.fetch(:url) }
-      token = response["token"] || response[:token]
+      upload_url = fetch_value(response, :url)
+      token = fetch_value(response, :token)
 
-      if token
-        upload_binary(upload_url, file, timeout:)
-        { token: }
-      else
-        upload_multipart(upload_url, file, timeout:)
-      end
+      return { token: }.tap { upload_binary(upload_url, file, timeout:) } if token
+
+      upload_multipart(upload_url, file, timeout:)
     end
 
     def upload_binary(upload_url, file, timeout:)
-      headers = {
+      headers = BINARY_HEADERS.merge(
         "Content-Disposition" => %(attachment; filename="#{file[:filename]}"),
         "Content-Range" => "bytes 0-#{file[:content].bytesize - 1}/#{file[:content].bytesize}",
-        "Content-Type" => "application/x-binary; charset=x-user-defined",
-        "X-File-Name" => file[:filename],
-        "X-Uploading-Mode" => "parallel",
-        "Connection" => "keep-alive"
-      }
+        "X-File-Name" => file[:filename]
+      )
 
       result = api.client.call(
-        method: "POST",
+        method: :post,
         url: upload_url,
         raw_body: file[:content],
         headers: headers,
@@ -76,7 +75,7 @@ module MaxApiClient
       }
 
       result = api.client.call(
-        method: "POST",
+        method: :post,
         url: upload_url,
         raw_body: body,
         headers: headers,
@@ -101,23 +100,29 @@ module MaxApiClient
     def file_from_source(source, filename: nil)
       raise ArgumentError, "source is required" if source.nil?
 
-      if source.is_a?(String) && File.file?(source)
-        {
-          filename: filename || File.basename(source),
-          content: File.binread(source)
-        }
-      elsif source.respond_to?(:read)
-        current_pos = source.pos if source.respond_to?(:pos)
-        source.rewind if source.respond_to?(:rewind)
-        content = source.read
-        source.pos = current_pos if current_pos && source.respond_to?(:pos=)
-        {
-          filename: filename || io_filename(source),
-          content: content
-        }
-      else
-        raise ArgumentError, "source must be a file path or readable IO"
-      end
+      return file_from_path(source, filename:) if source.is_a?(String) && File.file?(source)
+      return file_from_io(source, filename:) if source.respond_to?(:read)
+
+      raise ArgumentError, "source must be a file path or readable IO"
+    end
+
+    def file_from_path(source, filename:)
+      {
+        filename: filename || File.basename(source),
+        content: File.binread(source)
+      }
+    end
+
+    def file_from_io(source, filename:)
+      current_pos = source.pos if source.respond_to?(:pos)
+      source.rewind if source.respond_to?(:rewind)
+      content = source.read
+      source.pos = current_pos if current_pos && source.respond_to?(:pos=)
+
+      {
+        filename: filename || io_filename(source),
+        content:
+      }
     end
 
     def io_filename(source)
@@ -126,6 +131,10 @@ module MaxApiClient
       else
         SecureRandom.uuid
       end
+    end
+
+    def fetch_value(hash, key)
+      hash[key] || hash[key.to_s]
     end
   end
 end
