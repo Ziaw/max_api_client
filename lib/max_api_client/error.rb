@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
 module MaxApiClient
+  # Base error type for gem-specific failures.
   class Error < StandardError; end
 
+  # Error raised for non-successful API responses.
   class ApiError < Error
     attr_reader :status, :response
 

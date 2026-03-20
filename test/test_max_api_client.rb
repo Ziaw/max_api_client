@@ -40,17 +40,6 @@ class TestMaxApiClient < Minitest::Test
     ].each do |method_name|
       assert_respond_to api, method_name
     end
-
-    %i[
-      getMyInfo editMyInfo setMyCommands deleteMyCommands
-      getAllChats getChat getChatByLink editChatInfo
-      getChatMembership getChatAdmins addChatMembers getChatMembers removeChatMember
-      getPinnedMessage pinMessage unpinMessage sendAction leaveChat
-      sendMessageToChat sendMessageToUser getMessages getMessage editMessage deleteMessage
-      answerOnCallback getUpdates uploadImage uploadVideo uploadAudio uploadFile
-    ].each do |method_name|
-      assert_respond_to api, method_name
-    end
   end
 
   def test_send_message_to_chat_uses_messages_endpoint

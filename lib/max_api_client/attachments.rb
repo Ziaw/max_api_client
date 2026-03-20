@@ -1,12 +1,14 @@
 # frozen_string_literal: true
 
 module MaxApiClient
+  # Base type for all outgoing attachment payload wrappers.
   class Attachment
     def to_h
       raise NotImplementedError, "#{self.class} must implement #to_h"
     end
   end
 
+  # Shared attachment implementation for upload-backed media objects.
   class MediaAttachment < Attachment
     attr_reader :token
 
@@ -19,6 +21,7 @@ module MaxApiClient
     end
   end
 
+  # Attachment wrapper for uploaded or remote images.
   class ImageAttachment < MediaAttachment
     attr_reader :photos, :url
 
@@ -40,24 +43,28 @@ module MaxApiClient
     end
   end
 
+  # Attachment wrapper for uploaded videos.
   class VideoAttachment < MediaAttachment
     def to_h
       { type: "video", payload: }
     end
   end
 
+  # Attachment wrapper for uploaded audio files.
   class AudioAttachment < MediaAttachment
     def to_h
       { type: "audio", payload: }
     end
   end
 
+  # Attachment wrapper for generic uploaded files.
   class FileAttachment < MediaAttachment
     def to_h
       { type: "file", payload: }
     end
   end
 
+  # Attachment wrapper for sticker references.
   class StickerAttachment < Attachment
     attr_reader :code
 
@@ -70,6 +77,7 @@ module MaxApiClient
     end
   end
 
+  # Attachment wrapper for geo coordinates.
   class LocationAttachment < Attachment
     attr_reader :longitude, :latitude
 
@@ -83,6 +91,7 @@ module MaxApiClient
     end
   end
 
+  # Attachment wrapper for shared links or tokens.
   class ShareAttachment < Attachment
     attr_reader :url, :token
 

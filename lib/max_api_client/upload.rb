@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module MaxApiClient
+  # Upload helper that prepares files and sends them to upload endpoints.
   class Upload
     DEFAULT_TIMEOUT = 20
     BINARY_HEADERS = {

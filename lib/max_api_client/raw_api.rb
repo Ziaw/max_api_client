@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 module MaxApiClient
+  # Low-level grouped access to Max Bot API endpoint families.
   class RawApi < BaseApi
     attr_reader :client
-    alias getRaw get
 
     def bots
       @bots ||= build_api(BotsApi)
@@ -32,18 +32,18 @@ module MaxApiClient
     end
   end
 
+  # Raw bot profile endpoints.
   class BotsApi < BaseApi
     def get_my_info
       get("me")
     end
-    alias getMyInfo get_my_info
 
     def edit_my_info(extra)
       patch("me", body: extra)
     end
-    alias editMyInfo edit_my_info
   end
 
+  # Raw chat management endpoints.
   class ChatsApi < BaseApi
     def get_all(extra = {})
       get("chats", query: extra)
@@ -102,6 +102,7 @@ module MaxApiClient
     end
   end
 
+  # Raw message delivery and mutation endpoints.
   class MessagesApi < BaseApi
     ATTACHMENT_NOT_READY_CODE = "attachment.not.ready"
     ATTACHMENT_NOT_READY_DELAY = 1
@@ -136,12 +137,14 @@ module MaxApiClient
     end
   end
 
+  # Raw update subscription endpoints.
   class SubscriptionsApi < BaseApi
     def get_updates(**query)
       get("updates", query:)
     end
   end
 
+  # Raw upload URL acquisition endpoints.
   class UploadsApi < BaseApi
     def get_upload_url(type:)
       post("uploads", query: { type: })

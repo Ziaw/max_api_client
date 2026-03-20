@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module MaxApiClient
+  # HTTP transport client responsible for authenticated API requests.
   class Client
     DEFAULT_BASE_URL = "https://platform-api.max.ru"
     REQUEST_CLASSES = {

@@ -2,8 +2,6 @@
 
 Ruby gem for working with Max Bot API.
 
-The repository also includes the TypeScript client as a git submodule in [`vendor/max-bot-api-client-ts`](./vendor/max-bot-api-client-ts). At the moment, that client is the functional reference implementation, while the Ruby gem is the package scaffold and compatibility target.
-
 ## Status
 
 Current Ruby implementation now includes a working API client with:
@@ -12,8 +10,6 @@ Current Ruby implementation now includes a working API client with:
 - low-level `MaxApiClient::RawApi`
 - grouped bot/chat/message/subscription/upload methods
 - attachment helper objects for upload results
-
-The gem is still not a full bot framework with polling/composer/context parity, but the API layer is now aligned with the TypeScript client surface.
 
 ## Installation
 
@@ -33,12 +29,11 @@ bundle exec rake install
 
 ## Development
 
-Clone the repository and initialize the TypeScript reference client:
+Clone the repository and install dependencies:
 
 ```bash
 git clone git@github.com:Ziaw/max_api_client.git
 cd max_api_client
-git submodule update --init --recursive
 bundle install
 ```
 
@@ -49,39 +44,16 @@ bundle exec rake test
 bin/console
 ```
 
-## Ruby And TypeScript Comparison
-
-The repository currently contains two very different maturity levels.
-
-| Area | TypeScript client | Ruby gem |
-| --- | --- | --- |
-| Package state | Production-style implementation | Skeleton gem |
-| Public API | `Bot`, `Composer`, `Context`, `Api`, attachments, keyboard helpers | `Api`, `RawApi`, attachments, `VERSION`, `Error` |
-| Update handling | Long polling via `Bot#start` | `Api#get_updates` implemented, polling framework not implemented |
-| Middleware/composition | Implemented | Not implemented |
-| Raw API access | Implemented | Implemented |
-| File uploads | Implemented | Implemented |
-| Convenience methods | Implemented for chats, messages, subscriptions, uploads | Implemented for API layer |
-| Documentation | Present in submodule docs | This README documents current state and target API |
-
-In practical terms:
-
-- if you need a working client today, use the TypeScript implementation from the submodule;
-- if you are building the Ruby gem, treat the TS client as the compatibility reference;
-- README API sections below describe the API surface that should be wrapped by Ruby to reach parity.
-
 ## Reference API
-
-The TypeScript client wraps Max Bot API into a convenience `Api` class. The same method groups are the natural target for the Ruby gem.
 
 ### Bot Methods
 
-Methods exposed by the TS reference client:
+Ruby methods exposed by `MaxApiClient::Api`:
 
-- `getMyInfo`
-- `editMyInfo(extra)`
-- `setMyCommands(commands)`
-- `deleteMyCommands`
+- `get_my_info`
+- `edit_my_info(extra)`
+- `set_my_commands(commands)`
+- `delete_my_commands`
 
 Underlying HTTP routes:
 
@@ -96,22 +68,22 @@ Use cases:
 
 ### Chat Methods
 
-Methods exposed by the TS reference client:
+Ruby methods exposed by `MaxApiClient::Api`:
 
-- `getAllChats(extra = {})`
-- `getChat(chat_id)`
-- `getChatByLink(chat_link)`
-- `editChatInfo(chat_id, extra)`
-- `getChatMembership(chat_id)`
-- `getChatAdmins(chat_id)`
-- `addChatMembers(chat_id, user_ids)`
-- `getChatMembers(chat_id, extra = {})`
-- `removeChatMember(chat_id, user_id)`
-- `getPinnedMessage(chat_id)`
-- `pinMessage(chat_id, message_id, extra = {})`
-- `unpinMessage(chat_id)`
-- `sendAction(chat_id, action)`
-- `leaveChat(chat_id)`
+- `get_all_chats(extra = {})`
+- `get_chat(chat_id)`
+- `get_chat_by_link(chat_link)`
+- `edit_chat_info(chat_id, extra)`
+- `get_chat_membership(chat_id)`
+- `get_chat_admins(chat_id)`
+- `add_chat_members(chat_id, user_ids)`
+- `get_chat_members(chat_id, extra = {})`
+- `remove_chat_member(chat_id, user_id)`
+- `get_pinned_message(chat_id)`
+- `pin_message(chat_id, message_id, extra = {})`
+- `unpin_message(chat_id)`
+- `send_action(chat_id, action)`
+- `leave_chat(chat_id)`
 
 Underlying HTTP routes:
 
@@ -142,15 +114,15 @@ Use cases:
 
 ### Message Methods
 
-Methods exposed by the TS reference client:
+Ruby methods exposed by `MaxApiClient::Api`:
 
-- `sendMessageToChat(chat_id, text, extra = nil)`
-- `sendMessageToUser(user_id, text, extra = nil)`
-- `getMessages(chat_id, extra = {})`
-- `getMessage(message_id)`
-- `editMessage(message_id, extra = {})`
-- `deleteMessage(message_id, extra = {})`
-- `answerOnCallback(callback_id, extra = {})`
+- `send_message_to_chat(chat_id, text, extra = nil)`
+- `send_message_to_user(user_id, text, extra = nil)`
+- `get_messages(chat_id, extra = {})`
+- `get_message(message_id)`
+- `edit_message(message_id, extra = {})`
+- `delete_message(message_id, extra = {})`
+- `answer_on_callback(callback_id, extra = {})`
 
 Underlying HTTP routes:
 
@@ -161,7 +133,7 @@ Underlying HTTP routes:
 - `DELETE /messages`
 - `POST /answers`
 
-Supported concerns in the TS client:
+Supported concerns:
 
 - plain text sending to chat or direct user;
 - extra payload for formatting, reply links and attachments;
@@ -171,30 +143,28 @@ Supported concerns in the TS client:
 
 ### Subscription Methods
 
-Methods exposed by the TS reference client:
+Ruby methods exposed by `MaxApiClient::Api`:
 
-- `getUpdates(types = [], extra = {})`
+- `get_updates(types = [], extra = {})`
 
 Underlying HTTP route:
 
 - `GET /updates`
 
-This is the base used by the TS bot framework for long polling.
-
 ### Upload Methods
 
-Methods exposed by the TS reference client:
+Ruby methods exposed by `MaxApiClient::Api`:
 
-- `uploadImage(options)`
-- `uploadVideo(options)`
-- `uploadAudio(options)`
-- `uploadFile(options)`
+- `upload_image(options)`
+- `upload_video(options)`
+- `upload_audio(options)`
+- `upload_file(options)`
 
 Related HTTP route:
 
 - `POST /uploads`
 
-The TS implementation also includes upload helpers and attachment wrappers such as:
+Attachment helpers:
 
 - `ImageAttachment`
 - `VideoAttachment`
@@ -206,30 +176,13 @@ The TS implementation also includes upload helpers and attachment wrappers such 
 
 ### Raw API Access
 
-The TypeScript client exposes low-level access through `api.raw` and supports:
+Low-level access through `api.raw` supports:
 
 - `get`
 - `post`
 - `put`
 - `patch`
 - `delete`
-
-This matters for parity because it lets the client call new or unsupported endpoints before high-level wrappers are added.
-
-## Target Ruby Surface
-
-A reasonable Ruby parity target based on the TS client would be:
-
-```ruby
-client = MaxApiClient::Api.new(token: ENV.fetch("MAX_BOT_TOKEN"))
-
-client.get_my_info
-client.set_my_commands([{ name: "ping", description: "Ping command" }])
-client.send_message_to_chat(123, "Hello", format: "markdown")
-client.get_updates(%w[message_created])
-client.raw.get("me")
-client.upload_image(url: "https://example.com/picture.png")
-```
 
 ## Implementation Priorities
 
@@ -245,7 +198,6 @@ Recommended order for building the Ruby client:
 
 - Official Max Bot API docs: <https://dev.max.ru/>
 - TypeScript reference client: <https://github.com/max-messenger/max-bot-api-client-ts>
-- Embedded TS reference in this repo: [`vendor/max-bot-api-client-ts`](./vendor/max-bot-api-client-ts)
 
 ## License
 

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module MaxApiClient
+  # Shared HTTP helper for raw API groups.
   class BaseApi
     HTTP_METHODS = %i[get post put patch delete].freeze
 
@@ -26,7 +27,7 @@ module MaxApiClient
     end
 
     def compact_nil(hash)
-      hash.reject { |_key, value| value.nil? }
+      hash.compact
     end
   end
 end
