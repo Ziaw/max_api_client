@@ -17,17 +17,21 @@ module MaxApiClient
       @upload = Upload.new(self)
     end
 
+    # rubocop:disable Naming/AccessorMethodName
     def get_my_info
       raw.bots.get_my_info
     end
+    # rubocop:enable Naming/AccessorMethodName
 
     def edit_my_info(extra)
       raw.bots.edit_my_info(extra)
     end
 
+    # rubocop:disable Naming/AccessorMethodName
     def set_my_commands(commands)
       edit_my_info(commands:)
     end
+    # rubocop:enable Naming/AccessorMethodName
 
     def delete_my_commands
       edit_my_info(commands: [])

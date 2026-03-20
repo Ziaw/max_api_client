@@ -22,8 +22,9 @@ module MaxApiClient
       @read_timeout = read_timeout
     end
 
+    # rubocop:disable Metrics/ParameterLists
     def call(method:, path: nil, query: nil, body: nil, path_params: nil, headers: nil, url: nil, raw_body: nil,
-             parse_json: true)
+             parse_json: true, open_timeout: nil, read_timeout: nil)
       request = build_request(
         method:,
         path:,
@@ -33,17 +34,22 @@ module MaxApiClient
         headers:,
         url:,
         raw_body:,
-        parse_json:
+        parse_json:,
+        open_timeout:,
+        read_timeout:
       )
 
       return @adapter.call(request) if @adapter
 
       perform_request(request)
     end
+    # rubocop:enable Metrics/ParameterLists
 
     private
 
-    def build_request(method:, path:, query:, body:, path_params:, headers:, url:, raw_body:, parse_json:)
+    # rubocop:disable Metrics/ParameterLists
+    def build_request(method:, path:, query:, body:, path_params:, headers:, url:, raw_body:, parse_json:,
+                      open_timeout:, read_timeout:)
       {
         method: method.to_sym,
         url: build_url(path:, path_params:, query:, url:),
@@ -53,10 +59,14 @@ module MaxApiClient
         body: body,
         raw_body: raw_body,
         headers: default_headers(headers, body:, raw_body:),
-        parse_json: parse_json
+        parse_json: parse_json,
+        open_timeout: open_timeout,
+        read_timeout: read_timeout
       }
     end
+    # rubocop:enable Metrics/ParameterLists
 
+    # rubocop:disable Metrics/AbcSize
     def build_url(path:, path_params:, query:, url:)
       uri = if url
               URI(url)
@@ -73,6 +83,7 @@ module MaxApiClient
       uri.query = params.empty? ? nil : URI.encode_www_form(params)
       uri
     end
+    # rubocop:enable Metrics/AbcSize
 
     def expand_path(path, path_params)
       path_params.to_h.each_with_object(path.dup) do |(key, value), expanded|
@@ -91,7 +102,11 @@ module MaxApiClient
 
     def perform_request(request)
       uri = request.fetch(:url)
-      response = configured_http(uri).request(build_http_request(request, uri))
+      response = configured_http(
+        uri,
+        open_timeout: request[:open_timeout],
+        read_timeout: request[:read_timeout]
+      ).request(build_http_request(request, uri))
 
       {
         status: response.code.to_i,
@@ -100,11 +115,11 @@ module MaxApiClient
       }
     end
 
-    def configured_http(uri)
+    def configured_http(uri, open_timeout:, read_timeout:)
       Net::HTTP.new(uri.host, uri.port).tap do |http|
         http.use_ssl = uri.scheme == "https"
-        http.open_timeout = @open_timeout if @open_timeout
-        http.read_timeout = @read_timeout if @read_timeout
+        http.open_timeout = open_timeout || @open_timeout if open_timeout || @open_timeout
+        http.read_timeout = read_timeout || @read_timeout if read_timeout || @read_timeout
       end
     end
 

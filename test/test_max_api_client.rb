@@ -109,6 +109,7 @@ class TestMaxApiClient < Minitest::Test
     assert_empty requests
   end
 
+  # rubocop:disable Metrics/AbcSize
   def test_upload_file_uses_uploads_endpoint_and_returns_attachment
     Tempfile.create(["max-api-client", ".txt"]) do |file|
       file.write("payload")
@@ -128,6 +129,25 @@ class TestMaxApiClient < Minitest::Test
       assert_equal URI("https://upload.example.test/files"), requests[1][:url]
       assert_equal :post, requests[1][:method]
       assert_equal "payload", requests[1][:raw_body]
+    end
+  end
+  # rubocop:enable Metrics/AbcSize
+
+  def test_upload_file_passes_timeout_to_upload_request
+    Tempfile.create(["max-api-client", ".txt"]) do |file|
+      file.write("payload")
+      file.flush
+
+      api, requests = build_api([
+                                  { status: 200,
+                                    data: { "url" => "https://upload.example.test/files", "token" => "upload-token" } },
+                                  { status: 200, data: "" }
+                                ])
+
+      api.upload_file(source: file.path, timeout: 7)
+
+      assert_equal 7, requests[1][:open_timeout]
+      assert_equal 7, requests[1][:read_timeout]
     end
   end
 end

@@ -34,9 +34,11 @@ module MaxApiClient
 
   # Raw bot profile endpoints.
   class BotsApi < BaseApi
+    # rubocop:disable Naming/AccessorMethodName
     def get_my_info
       get("me")
     end
+    # rubocop:enable Naming/AccessorMethodName
 
     def edit_my_info(extra)
       patch("me", body: extra)

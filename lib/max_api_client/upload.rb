@@ -50,6 +50,7 @@ module MaxApiClient
       upload_multipart(upload_url, file, timeout:)
     end
 
+    # rubocop:disable Metrics/AbcSize
     def upload_binary(upload_url, file, timeout:)
       headers = BINARY_HEADERS.merge(
         "Content-Disposition" => %(attachment; filename="#{file[:filename]}"),
@@ -62,11 +63,14 @@ module MaxApiClient
         url: upload_url,
         raw_body: file[:content],
         headers: headers,
-        parse_json: false
+        parse_json: false,
+        open_timeout: timeout,
+        read_timeout: timeout
       )
 
       raise ApiError.new(result[:status], { message: result[:data] }) if result[:status] >= 400
     end
+    # rubocop:enable Metrics/AbcSize
 
     def upload_multipart(upload_url, file, timeout:)
       boundary = "----max-api-client-#{SecureRandom.hex(12)}"
@@ -80,7 +84,9 @@ module MaxApiClient
         url: upload_url,
         raw_body: body,
         headers: headers,
-        parse_json: true
+        parse_json: true,
+        open_timeout: timeout,
+        read_timeout: timeout
       )
 
       raise ApiError.new(result[:status], result[:data]) if result[:status] >= 400

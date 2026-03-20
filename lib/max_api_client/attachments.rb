@@ -13,6 +13,7 @@ module MaxApiClient
     attr_reader :token
 
     def initialize(token: nil)
+      super()
       @token = token
     end
 
@@ -69,6 +70,7 @@ module MaxApiClient
     attr_reader :code
 
     def initialize(code:)
+      super()
       @code = code
     end
 
@@ -82,6 +84,7 @@ module MaxApiClient
     attr_reader :longitude, :latitude
 
     def initialize(lon:, lat:)
+      super()
       @longitude = lon
       @latitude = lat
     end
@@ -96,6 +99,7 @@ module MaxApiClient
     attr_reader :url, :token
 
     def initialize(url: nil, token: nil)
+      super()
       @url = url
       @token = token
     end

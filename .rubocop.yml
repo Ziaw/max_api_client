@@ -129,6 +129,10 @@ Lint/UselessRuby2Keywords:
   Enabled: true
 Metrics/CollectionLiteralLength:
   Enabled: true
+Metrics/ClassLength:
+  Max: 150
+Metrics/MethodLength:
+  Max: 20
 Naming/BlockForwarding:
   Enabled: true
 Naming/PredicateMethod:

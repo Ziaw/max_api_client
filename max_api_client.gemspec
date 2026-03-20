@@ -8,8 +8,8 @@ Gem::Specification.new do |spec|
   spec.authors = ["Alexandr Zimin"]
   spec.email = ["ziminav@gmail.com"]
 
-  spec.summary = "Ruby client scaffold for Max Bot API"
-  spec.description = "Ruby gem for Max Bot API. This repository also embeds the official TypeScript client as a reference implementation for Ruby API parity."
+  spec.summary = "Ruby client for Max Bot API"
+  spec.description = "Ruby client for Max Bot API."
   spec.homepage = "https://github.com/Ziaw/max_api_client"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.1.0"

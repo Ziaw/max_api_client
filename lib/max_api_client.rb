@@ -14,5 +14,6 @@ require_relative "max_api_client/attachments"
 require_relative "max_api_client/upload"
 require_relative "max_api_client/api"
 
+# Root namespace for the Max Bot API Ruby client.
 module MaxApiClient
 end
