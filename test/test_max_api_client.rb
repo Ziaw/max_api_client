@@ -1,13 +1,128 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "tempfile"
 
 class TestMaxApiClient < Minitest::Test
+  def build_api(responses = [], &block)
+    queue = responses.dup
+    requests = []
+    adapter = lambda do |request|
+      requests << request
+      if block
+        block.call(request)
+      else
+        queue.shift || { status: 200, data: {} }
+      end
+    end
+
+    [MaxApiClient::Api.new(token: "test-token", adapter:), requests]
+  end
+
   def test_that_it_has_a_version_number
     refute_nil ::MaxApiClient::VERSION
   end
 
-  def test_it_does_something_useful
-    assert false
+  def test_it_exposes_error_class
+    assert_equal StandardError, MaxApiClient::Error.superclass
+  end
+
+  def test_api_exposes_ts_parity_methods
+    api, = build_api
+
+    %i[
+      get_my_info edit_my_info set_my_commands delete_my_commands
+      get_all_chats get_chat get_chat_by_link edit_chat_info
+      get_chat_membership get_chat_admins add_chat_members get_chat_members remove_chat_member
+      get_pinned_message pin_message unpin_message send_action leave_chat
+      send_message_to_chat send_message_to_user get_messages get_message edit_message delete_message
+      answer_on_callback get_updates upload_image upload_video upload_audio upload_file
+    ].each do |method_name|
+      assert_respond_to api, method_name
+    end
+
+    %i[
+      getMyInfo editMyInfo setMyCommands deleteMyCommands
+      getAllChats getChat getChatByLink editChatInfo
+      getChatMembership getChatAdmins addChatMembers getChatMembers removeChatMember
+      getPinnedMessage pinMessage unpinMessage sendAction leaveChat
+      sendMessageToChat sendMessageToUser getMessages getMessage editMessage deleteMessage
+      answerOnCallback getUpdates uploadImage uploadVideo uploadAudio uploadFile
+    ].each do |method_name|
+      assert_respond_to api, method_name
+    end
+  end
+
+  def test_send_message_to_chat_uses_messages_endpoint
+    api, requests = build_api([{ status: 200, data: { "message" => { "body" => { "text" => "Hello" } } } }])
+
+    response = api.send_message_to_chat(123, "Hello", format: "markdown")
+
+    assert_equal "Hello", response.dig("body", "text")
+    assert_equal "POST", requests.first[:method]
+    assert_equal URI("https://platform-api.max.ru/messages?chat_id=123"), requests.first[:url]
+    assert_equal({ text: "Hello", format: "markdown" }, requests.first[:body])
+  end
+
+  def test_get_updates_joins_types_like_ts_api
+    api, requests = build_api([{ status: 200, data: { "updates" => [] } }])
+
+    api.get_updates(%w[message_created bot_started], marker: 42)
+
+    assert_equal URI("https://platform-api.max.ru/updates?types=message_created%2Cbot_started&marker=42"),
+                 requests.first[:url]
+  end
+
+  def test_get_chat_members_joins_user_ids
+    api, requests = build_api([{ status: 200, data: { "members" => [] } }])
+
+    api.get_chat_members(10, user_ids: [1, 2, 3], count: 50)
+
+    assert_equal URI("https://platform-api.max.ru/chats/10/members?user_ids=1%2C2%2C3&count=50"), requests.first[:url]
+  end
+
+  def test_messages_send_retries_attachment_not_ready
+    api, requests = build_api([
+                                { status: 400,
+                                  data: { "code" => "attachment.not.ready", "message" => "Attachment not ready" } },
+                                { status: 200, data: { "message" => { "id" => "mid" } } }
+                              ])
+
+    response = api.send_message_to_chat(1, "hello")
+
+    assert_equal "mid", response["id"]
+    assert_equal 2, requests.size
+  end
+
+  def test_upload_image_from_url_returns_attachment_without_network_upload
+    api, requests = build_api
+
+    attachment = api.upload_image(url: "https://example.com/image.png")
+
+    assert_instance_of MaxApiClient::ImageAttachment, attachment
+    assert_equal({ type: "image", payload: { url: "https://example.com/image.png" } }, attachment.to_h)
+    assert_empty requests
+  end
+
+  def test_upload_file_uses_uploads_endpoint_and_returns_attachment
+    Tempfile.create(["max-api-client", ".txt"]) do |file|
+      file.write("payload")
+      file.flush
+
+      api, requests = build_api([
+                                  { status: 200,
+                                    data: { "url" => "https://upload.example.test/files", "token" => "upload-token" } },
+                                  { status: 200, data: "" }
+                                ])
+
+      attachment = api.upload_file(source: file.path)
+
+      assert_instance_of MaxApiClient::FileAttachment, attachment
+      assert_equal({ type: "file", payload: { token: "upload-token" } }, attachment.to_h)
+      assert_equal URI("https://platform-api.max.ru/uploads?type=file"), requests[0][:url]
+      assert_equal URI("https://upload.example.test/files"), requests[1][:url]
+      assert_equal "POST", requests[1][:method]
+      assert_equal "payload", requests[1][:raw_body]
+    end
   end
 end

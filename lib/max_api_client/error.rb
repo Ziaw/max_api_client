@@ -1,0 +1,23 @@
+# frozen_string_literal: true
+
+module MaxApiClient
+  class Error < StandardError; end
+
+  class ApiError < Error
+    attr_reader :status, :response
+
+    def initialize(status, response = {})
+      @status = status
+      @response = response || {}
+      super("#{status}: #{description}")
+    end
+
+    def code
+      response["code"] || response[:code]
+    end
+
+    def description
+      response["message"] || response[:message] || "Unknown API error"
+    end
+  end
+end

@@ -1,4 +1,140 @@
 module MaxApiClient
   VERSION: String
-  # See the writing guide of rbs: https://github.com/ruby/rbs#guides
+
+  class Error < StandardError
+  end
+
+  class ApiError < Error
+    attr_reader status: Integer
+    attr_reader response: untyped
+    def code: () -> untyped
+    def description: () -> String
+  end
+
+  class Client
+    DEFAULT_BASE_URL: String
+    attr_reader token: String
+    attr_reader base_url: String
+    def initialize: (token: String, ?base_url: String, ?adapter: untyped, ?open_timeout: Numeric?, ?read_timeout: Numeric?) -> void
+    def call: (method: Symbol | String, ?path: String?, ?query: untyped, ?body: untyped, ?path_params: untyped, ?headers: untyped, ?url: String?, ?raw_body: untyped, ?parse_json: bool) -> Hash[Symbol, untyped]
+  end
+
+  class RawApi
+    def initialize: (Client) -> void
+    def get: (String, ?query: untyped, ?path_params: untyped) -> untyped
+    def post: (String, ?query: untyped, ?body: untyped, ?path_params: untyped) -> untyped
+    def put: (String, ?query: untyped, ?body: untyped, ?path_params: untyped) -> untyped
+    def patch: (String, ?query: untyped, ?body: untyped, ?path_params: untyped) -> untyped
+    def delete: (String, ?query: untyped, ?body: untyped, ?path_params: untyped) -> untyped
+    def bots: () -> BotsApi
+    def chats: () -> ChatsApi
+    def messages: () -> MessagesApi
+    def subscriptions: () -> SubscriptionsApi
+    def uploads: () -> UploadsApi
+  end
+
+  class BotsApi
+    def get_my_info: () -> untyped
+    def edit_my_info: (untyped extra) -> untyped
+  end
+
+  class ChatsApi
+    def get_all: (?untyped extra) -> untyped
+    def get_by_id: (chat_id: Integer) -> untyped
+    def get_by_link: (chat_link: String) -> untyped
+    def edit: (chat_id: Integer, **untyped extra) -> untyped
+    def get_chat_membership: (chat_id: Integer) -> untyped
+    def get_chat_admins: (chat_id: Integer) -> untyped
+    def add_chat_members: (chat_id: Integer, user_ids: Array[Integer]) -> untyped
+    def get_chat_members: (chat_id: Integer, **untyped query) -> untyped
+    def remove_chat_member: (chat_id: Integer, user_id: Integer, ?block: bool?) -> untyped
+    def get_pinned_message: (chat_id: Integer) -> untyped
+    def pin_message: (chat_id: Integer, message_id: String, ?notify: bool?) -> untyped
+    def unpin_message: (chat_id: Integer) -> untyped
+    def send_action: (chat_id: Integer, action: String | Symbol) -> untyped
+    def leave_chat: (chat_id: Integer) -> untyped
+  end
+
+  class MessagesApi
+    def get: (**untyped query) -> untyped
+    def get_by_id: (message_id: String) -> untyped
+    def send: (?chat_id: Integer?, ?user_id: Integer?, ?disable_link_preview: bool?, **untyped body) -> untyped
+    def edit: (message_id: String, **untyped body) -> untyped
+    def delete: (message_id: String) -> untyped
+    def answer_on_callback: (callback_id: String, **untyped body) -> untyped
+  end
+
+  class SubscriptionsApi
+    def get_updates: (**untyped query) -> untyped
+  end
+
+  class UploadsApi
+    def get_upload_url: (type: String | Symbol) -> untyped
+  end
+
+  class Attachment
+    def to_h: () -> Hash[Symbol, untyped]
+  end
+
+  class ImageAttachment < Attachment
+  end
+
+  class VideoAttachment < Attachment
+  end
+
+  class AudioAttachment < Attachment
+  end
+
+  class FileAttachment < Attachment
+  end
+
+  class StickerAttachment < Attachment
+  end
+
+  class LocationAttachment < Attachment
+  end
+
+  class ShareAttachment < Attachment
+  end
+
+  class Upload
+    def initialize: (Api) -> void
+  end
+
+  class Api
+    attr_reader raw: RawApi
+    attr_reader upload: Upload
+    attr_reader client: Client
+    def initialize: (token: String, ?base_url: String, ?adapter: untyped, ?open_timeout: Numeric?, ?read_timeout: Numeric?) -> void
+    def get_my_info: () -> untyped
+    def edit_my_info: (untyped extra) -> untyped
+    def set_my_commands: (Array[untyped] commands) -> untyped
+    def delete_my_commands: () -> untyped
+    def get_all_chats: (?untyped extra) -> untyped
+    def get_chat: (Integer chat_id) -> untyped
+    def get_chat_by_link: (String chat_link) -> untyped
+    def edit_chat_info: (Integer chat_id, untyped extra) -> untyped
+    def get_chat_membership: (Integer chat_id) -> untyped
+    def get_chat_admins: (Integer chat_id) -> untyped
+    def add_chat_members: (Integer chat_id, Array[Integer] user_ids) -> untyped
+    def get_chat_members: (Integer chat_id, ?untyped extra) -> untyped
+    def remove_chat_member: (Integer chat_id, Integer user_id, ?block: bool?) -> untyped
+    def get_pinned_message: (Integer chat_id) -> untyped
+    def pin_message: (Integer chat_id, String message_id, ?untyped extra) -> untyped
+    def unpin_message: (Integer chat_id) -> untyped
+    def send_action: (Integer chat_id, String | Symbol action) -> untyped
+    def leave_chat: (Integer chat_id) -> untyped
+    def send_message_to_chat: (Integer chat_id, String text, ?untyped extra) -> untyped
+    def send_message_to_user: (Integer user_id, String text, ?untyped extra) -> untyped
+    def get_messages: (Integer chat_id, ?untyped extra) -> untyped
+    def get_message: (String message_id) -> untyped
+    def edit_message: (String message_id, ?untyped extra) -> untyped
+    def delete_message: (String message_id, ?untyped extra) -> untyped
+    def answer_on_callback: (String callback_id, ?untyped extra) -> untyped
+    def get_updates: (?Array[String] | String types, ?untyped extra) -> untyped
+    def upload_image: (Hash[Symbol, untyped] options) -> ImageAttachment
+    def upload_video: (Hash[Symbol, untyped] options) -> VideoAttachment
+    def upload_audio: (Hash[Symbol, untyped] options) -> AudioAttachment
+    def upload_file: (Hash[Symbol, untyped] options) -> FileAttachment
+  end
 end
