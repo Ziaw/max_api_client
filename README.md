@@ -1,35 +1,35 @@
 # max_api_client
 
-Ruby gem for working with Max Bot API.
+Ruby gem для работы с Max Bot API.
 
-## Status
+## Состояние
 
-Current Ruby implementation now includes a working API client with:
+Текущая реализация на Ruby включает  API-клиент со следующими возможностями:
 
-- high-level `MaxApiClient::Api`
-- low-level `MaxApiClient::RawApi`
-- grouped bot/chat/message/subscription/upload methods
-- attachment helper objects for upload results
+- высокоуровневый `MaxApiClient::Api`
+- низкоуровневый `MaxApiClient::RawApi`
+- сгруппированные методы для bot/chat/message/subscription/upload
+- вспомогательные объекты вложений для результатов загрузки
 
-## Installation
+## Установка
 
-Add the gem to your project:
+Добавьте gem в проект:
 
 ```ruby
 # Gemfile
 gem "max_api_client", git: "git@github.com:Ziaw/max_api_client.git"
 ```
 
-Or install locally during development:
+Или установите локально во время разработки:
 
 ```bash
 bundle install
 bundle exec rake install
 ```
 
-## Development
+## Разработка
 
-Clone the repository and install dependencies:
+Склонируйте репозиторий и установите зависимости:
 
 ```bash
 git clone git@github.com:Ziaw/max_api_client.git
@@ -37,38 +37,38 @@ cd max_api_client
 bundle install
 ```
 
-Useful commands:
+Полезные команды:
 
 ```bash
 bundle exec rake test
 bin/console
 ```
 
-## Reference API
+## Справочник API
 
-### Bot Methods
+### Методы бота
 
-Ruby methods exposed by `MaxApiClient::Api`:
+Методы Ruby, доступные через `MaxApiClient::Api`:
 
 - `get_my_info`
 - `edit_my_info(extra)`
 - `set_my_commands(commands)`
 - `delete_my_commands`
 
-Underlying HTTP routes:
+Соответствующие HTTP-маршруты:
 
 - `GET /me`
 - `PATCH /me`
 
-Use cases:
+Типовые сценарии:
 
-- fetch current bot profile;
-- update bot name, description, avatar and commands;
-- publish or clear command hints shown to users.
+- получить текущий профиль бота;
+- обновить имя, описание, аватар и команды бота;
+- опубликовать или очистить подсказки команд для пользователей.
 
-### Chat Methods
+### Методы чатов
 
-Ruby methods exposed by `MaxApiClient::Api`:
+Методы Ruby, доступные через `MaxApiClient::Api`:
 
 - `get_all_chats(extra = {})`
 - `get_chat(chat_id)`
@@ -85,7 +85,7 @@ Ruby methods exposed by `MaxApiClient::Api`:
 - `send_action(chat_id, action)`
 - `leave_chat(chat_id)`
 
-Underlying HTTP routes:
+Соответствующие HTTP-маршруты:
 
 - `GET /chats`
 - `GET /chats/{chat_id}`
@@ -102,19 +102,19 @@ Underlying HTTP routes:
 - `POST /chats/{chat_id}/actions`
 - `DELETE /chats/{chat_id}/members/me`
 
-Use cases:
+Типовые сценарии:
 
-- enumerate chats available to the bot;
-- resolve chat by id or public link;
-- edit title, icon and chat metadata;
-- manage membership and admins;
-- read, set and clear pinned messages;
-- send typing or other sender actions;
-- leave a chat.
+- получить список чатов, доступных боту;
+- найти чат по идентификатору или публичной ссылке;
+- изменить заголовок, иконку и метаданные чата;
+- управлять участниками и администраторами;
+- читать, устанавливать и снимать закреплённые сообщения;
+- отправлять статус набора текста и другие действия отправителя;
+- выходить из чата.
 
-### Message Methods
+### Методы сообщений
 
-Ruby methods exposed by `MaxApiClient::Api`:
+Методы Ruby, доступные через `MaxApiClient::Api`:
 
 - `send_message_to_chat(chat_id, text, extra = nil)`
 - `send_message_to_user(user_id, text, extra = nil)`
@@ -124,7 +124,7 @@ Ruby methods exposed by `MaxApiClient::Api`:
 - `delete_message(message_id, extra = {})`
 - `answer_on_callback(callback_id, extra = {})`
 
-Underlying HTTP routes:
+Соответствующие HTTP-маршруты:
 
 - `POST /messages`
 - `GET /messages`
@@ -133,38 +133,38 @@ Underlying HTTP routes:
 - `DELETE /messages`
 - `POST /answers`
 
-Supported concerns:
+Поддерживаемые возможности:
 
-- plain text sending to chat or direct user;
-- extra payload for formatting, reply links and attachments;
-- message editing and deletion;
-- callback button answers;
-- automatic retry when upload-backed attachments are not yet ready.
+- отправка обычного текста в чат или напрямую пользователю;
+- дополнительный payload для форматирования, reply-ссылок и вложений;
+- редактирование и удаление сообщений;
+- ответы на callback-кнопки;
+- автоматический повтор запроса, если вложение после загрузки ещё не готово.
 
-### Subscription Methods
+### Методы подписок
 
-Ruby methods exposed by `MaxApiClient::Api`:
+Методы Ruby, доступные через `MaxApiClient::Api`:
 
 - `get_updates(types = [], extra = {})`
 
-Underlying HTTP route:
+Соответствующий HTTP-маршрут:
 
 - `GET /updates`
 
-### Upload Methods
+### Методы загрузки
 
-Ruby methods exposed by `MaxApiClient::Api`:
+Методы Ruby, доступные через `MaxApiClient::Api`:
 
 - `upload_image(options)`
 - `upload_video(options)`
 - `upload_audio(options)`
 - `upload_file(options)`
 
-Related HTTP route:
+Связанный HTTP-маршрут:
 
 - `POST /uploads`
 
-Attachment helpers:
+Вспомогательные классы вложений:
 
 - `ImageAttachment`
 - `VideoAttachment`
@@ -174,9 +174,9 @@ Attachment helpers:
 - `LocationAttachment`
 - `ShareAttachment`
 
-### Raw API Access
+### Доступ к Raw API
 
-Low-level access through `api.raw` supports:
+Низкоуровневый доступ через `api.raw` поддерживает:
 
 - `get`
 - `post`
@@ -184,21 +184,21 @@ Low-level access through `api.raw` supports:
 - `patch`
 - `delete`
 
-## Implementation Priorities
+## Приоритеты реализации
 
-Recommended order for building the Ruby client:
+Рекомендуемый порядок развития Ruby-клиента:
 
-1. HTTP client and error layer.
-2. Raw request interface.
-3. High-level `Api` wrapper for bot, chat, message and update endpoints.
-4. Upload flow and attachment objects.
-5. Optional bot framework with polling, context and middleware.
+1. HTTP-клиент и слой ошибок.
+2. Интерфейс raw-запросов.
+3. Высокоуровневая обёртка `Api` для bot, chat, message и update endpoints.
+4. Механизм загрузки файлов и объекты вложений. (вы находитесь здесь)
+5. Опциональный bot framework с polling, context и middleware.
 
-## Sources
+## Источники
 
-- Official Max Bot API docs: <https://dev.max.ru/>
+- Официальная документация Max Bot API: <https://dev.max.ru/>
 - TypeScript reference client: <https://github.com/max-messenger/max-bot-api-client-ts>
 
-## License
+## Лицензия
 
-Released under the MIT License. See [`LICENSE.txt`](./LICENSE.txt).
+Проект распространяется по лицензии MIT. См. [`LICENSE.txt`](./LICENSE.txt).
