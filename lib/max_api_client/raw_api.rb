@@ -40,14 +40,14 @@ module MaxApiClient
     end
     # rubocop:enable Naming/AccessorMethodName
 
-    def edit_my_info(extra)
+    def edit_my_info(**extra)
       patch("me", body: extra)
     end
   end
 
   # Raw chat management endpoints.
   class ChatsApi < BaseApi
-    def get_all(extra = {})
+    def get_all(**extra)
       get("chats", query: extra)
     end
 

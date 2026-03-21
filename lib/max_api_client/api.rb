@@ -23,8 +23,8 @@ module MaxApiClient
     end
     # rubocop:enable Naming/AccessorMethodName
 
-    def edit_my_info(extra)
-      raw.bots.edit_my_info(extra)
+    def edit_my_info(**extra)
+      raw.bots.edit_my_info(**extra)
     end
 
     # rubocop:disable Naming/AccessorMethodName
@@ -37,8 +37,8 @@ module MaxApiClient
       edit_my_info(commands: [])
     end
 
-    def get_all_chats(extra = {})
-      raw.chats.get_all(extra)
+    def get_all_chats(**extra)
+      raw.chats.get_all(**extra)
     end
 
     def get_chat(chat_id)
@@ -49,7 +49,7 @@ module MaxApiClient
       raw.chats.get_by_link(chat_link:)
     end
 
-    def edit_chat_info(chat_id, extra)
+    def edit_chat_info(chat_id, **extra)
       raw.chats.edit(chat_id:, **extra)
     end
 
@@ -65,7 +65,7 @@ module MaxApiClient
       raw.chats.add_chat_members(chat_id:, user_ids:)
     end
 
-    def get_chat_members(chat_id, extra = {})
+    def get_chat_members(chat_id, **extra)
       raw.chats.get_chat_members(chat_id:, **csv_query(extra, :user_ids))
     end
 
@@ -77,7 +77,7 @@ module MaxApiClient
       raw.chats.get_pinned_message(chat_id:)
     end
 
-    def pin_message(chat_id, message_id, extra = {})
+    def pin_message(chat_id, message_id, **extra)
       raw.chats.pin_message(chat_id:, message_id:, notify: extra[:notify])
     end
 
@@ -93,15 +93,15 @@ module MaxApiClient
       raw.chats.leave_chat(chat_id:)
     end
 
-    def send_message_to_chat(chat_id, text, extra = nil)
-      message_from(raw.messages.send(chat_id:, text:, **(extra || {})))
+    def send_message_to_chat(chat_id, text, **extra)
+      message_from(raw.messages.send(chat_id:, text:, **extra))
     end
 
-    def send_message_to_user(user_id, text, extra = nil)
-      message_from(raw.messages.send(user_id:, text:, **(extra || {})))
+    def send_message_to_user(user_id, text, **extra)
+      message_from(raw.messages.send(user_id:, text:, **extra))
     end
 
-    def get_messages(chat_id, extra = {})
+    def get_messages(chat_id, **extra)
       raw.messages.get(chat_id:, **csv_query(extra, :message_ids))
     end
 
@@ -109,19 +109,19 @@ module MaxApiClient
       raw.messages.get_by_id(message_id:)
     end
 
-    def edit_message(message_id, extra = {})
+    def edit_message(message_id, **extra)
       raw.messages.edit(message_id:, **extra)
     end
 
-    def delete_message(message_id, extra = {})
+    def delete_message(message_id, **extra)
       raw.messages.delete(message_id:, **extra)
     end
 
-    def answer_on_callback(callback_id, extra = {})
+    def answer_on_callback(callback_id, **extra)
       raw.messages.answer_on_callback(callback_id:, **extra)
     end
 
-    def get_updates(types = [], extra = {})
+    def get_updates(types = [], **extra)
       raw.subscriptions.get_updates(types: normalize_types(types), **extra)
     end
 

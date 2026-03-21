@@ -44,6 +44,31 @@ bundle exec rake test
 bin/console
 ```
 
+## Релиз
+
+Релиз публикуется через GitHub Releases и GitHub Actions.
+
+Перед релизом:
+
+1. Обновите версию в `lib/max_api_client/version.rb`.
+2. Перенесите изменения из `Unreleased` в `CHANGELOG.md`.
+3. Закоммитьте изменения в `master`.
+4. В настройках репозитория добавьте секрет `RUBYGEMS_API_KEY`.
+
+Как выпустить новую версию:
+
+1. Откройте GitHub: `Releases` -> `Draft a new release`.
+2. Создайте тег в формате `vX.Y.Z`, где версия совпадает с `MaxApiClient::VERSION`.
+3. Опубликуйте релиз.
+
+После публикации workflow `.github/workflows/release.yml`:
+
+- проверит, что тег совпадает с версией gem;
+- прогонит тесты;
+- соберёт `.gem`;
+- опубликует gem в RubyGems;
+- приложит собранный `.gem` к GitHub Release.
+
 ## Справочник API
 
 ### Методы бота
@@ -51,7 +76,7 @@ bin/console
 Методы Ruby, доступные через `MaxApiClient::Api`:
 
 - `get_my_info`
-- `edit_my_info(extra)`
+- `edit_my_info(**extra)`
 - `set_my_commands(commands)`
 - `delete_my_commands`
 
@@ -70,17 +95,17 @@ bin/console
 
 Методы Ruby, доступные через `MaxApiClient::Api`:
 
-- `get_all_chats(extra = {})`
+- `get_all_chats(**extra)`
 - `get_chat(chat_id)`
 - `get_chat_by_link(chat_link)`
-- `edit_chat_info(chat_id, extra)`
+- `edit_chat_info(chat_id, **extra)`
 - `get_chat_membership(chat_id)`
 - `get_chat_admins(chat_id)`
 - `add_chat_members(chat_id, user_ids)`
-- `get_chat_members(chat_id, extra = {})`
+- `get_chat_members(chat_id, **extra)`
 - `remove_chat_member(chat_id, user_id)`
 - `get_pinned_message(chat_id)`
-- `pin_message(chat_id, message_id, extra = {})`
+- `pin_message(chat_id, message_id, **extra)`
 - `unpin_message(chat_id)`
 - `send_action(chat_id, action)`
 - `leave_chat(chat_id)`
@@ -116,13 +141,13 @@ bin/console
 
 Методы Ruby, доступные через `MaxApiClient::Api`:
 
-- `send_message_to_chat(chat_id, text, extra = nil)`
-- `send_message_to_user(user_id, text, extra = nil)`
-- `get_messages(chat_id, extra = {})`
+- `send_message_to_chat(chat_id, text, **extra)`
+- `send_message_to_user(user_id, text, **extra)`
+- `get_messages(chat_id, **extra)`
 - `get_message(message_id)`
-- `edit_message(message_id, extra = {})`
-- `delete_message(message_id, extra = {})`
-- `answer_on_callback(callback_id, extra = {})`
+- `edit_message(message_id, **extra)`
+- `delete_message(message_id, **extra)`
+- `answer_on_callback(callback_id, **extra)`
 
 Соответствующие HTTP-маршруты:
 
@@ -145,7 +170,7 @@ bin/console
 
 Методы Ruby, доступные через `MaxApiClient::Api`:
 
-- `get_updates(types = [], extra = {})`
+- `get_updates(types = [], **extra)`
 
 Соответствующий HTTP-маршрут:
 
