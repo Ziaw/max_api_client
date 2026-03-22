@@ -36,10 +36,42 @@ class TestMaxApiClient < Minitest::Test
       get_chat_membership get_chat_admins add_chat_members get_chat_members remove_chat_member
       get_pinned_message pin_message unpin_message send_action leave_chat
       send_message_to_chat send_message_to_user get_messages get_message edit_message delete_message
-      answer_on_callback get_updates upload_image upload_video upload_audio upload_file
+      answer_on_callback get_subscriptions subscribe unsubscribe get_updates
+      upload_image upload_video upload_audio upload_file
     ].each do |method_name|
       assert_respond_to api, method_name
     end
+  end
+
+  def test_get_subscriptions_uses_subscriptions_endpoint
+    api, requests = build_api([{ status: 200, data: { "subscriptions" => [] } }])
+
+    api.get_subscriptions
+
+    assert_equal :get, requests.first[:method]
+    assert_equal URI("https://platform-api.max.ru/subscriptions"), requests.first[:url]
+  end
+
+  def test_subscribe_posts_subscription_body
+    api, requests = build_api([{ status: 200, data: { "url" => "https://example.com/webhook" } }])
+
+    api.subscribe("https://example.com/webhook", update_types: %w[message_created bot_started], secret: "secret")
+
+    assert_equal :post, requests.first[:method]
+    assert_equal URI("https://platform-api.max.ru/subscriptions"), requests.first[:url]
+    assert_equal(
+      { url: "https://example.com/webhook", update_types: %w[message_created bot_started], secret: "secret" },
+      requests.first[:body]
+    )
+  end
+
+  def test_unsubscribe_deletes_subscription_by_url
+    api, requests = build_api([{ status: 200, data: {} }])
+
+    api.unsubscribe("https://example.com/webhook")
+
+    assert_equal :delete, requests.first[:method]
+    assert_equal URI("https://platform-api.max.ru/subscriptions?url=https%3A%2F%2Fexample.com%2Fwebhook"), requests.first[:url]
   end
 
   def test_send_message_to_chat_uses_messages_endpoint

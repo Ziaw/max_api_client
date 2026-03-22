@@ -141,6 +141,18 @@ module MaxApiClient
 
   # Raw update subscription endpoints.
   class SubscriptionsApi < BaseApi
+    def get_subscriptions
+      get("subscriptions")
+    end
+
+    def subscribe(url:, update_types: nil, secret: nil)
+      post("subscriptions", body: compact_nil(url:, update_types:, secret:))
+    end
+
+    def unsubscribe(url:)
+      delete("subscriptions", query: { url: })
+    end
+
     def get_updates(**query)
       get("updates", query:)
     end

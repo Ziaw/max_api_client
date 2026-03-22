@@ -121,6 +121,18 @@ module MaxApiClient
       raw.messages.answer_on_callback(callback_id:, **extra)
     end
 
+    def get_subscriptions
+      raw.subscriptions.get_subscriptions
+    end
+
+    def subscribe(url, update_types: nil, secret: nil)
+      raw.subscriptions.subscribe(url:, update_types:, secret:)
+    end
+
+    def unsubscribe(url)
+      raw.subscriptions.unsubscribe(url:)
+    end
+
     def get_updates(types = [], **extra)
       raw.subscriptions.get_updates(types: normalize_types(types), **extra)
     end

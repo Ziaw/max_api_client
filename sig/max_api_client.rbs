@@ -65,6 +65,9 @@ module MaxApiClient
   end
 
   class SubscriptionsApi
+    def get_subscriptions: () -> untyped
+    def subscribe: (url: String, ?update_types: Array[String]?, ?secret: String?) -> untyped
+    def unsubscribe: (url: String) -> untyped
     def get_updates: (**untyped query) -> untyped
   end
 
@@ -131,6 +134,9 @@ module MaxApiClient
     def edit_message: (String message_id, ?untyped extra) -> untyped
     def delete_message: (String message_id, ?untyped extra) -> untyped
     def answer_on_callback: (String callback_id, ?untyped extra) -> untyped
+    def get_subscriptions: () -> untyped
+    def subscribe: (String url, ?update_types: Array[String]?, ?secret: String?) -> untyped
+    def unsubscribe: (String url) -> untyped
     def get_updates: (?Array[String] | String types, ?untyped extra) -> untyped
     def upload_image: (Hash[Symbol, untyped] options) -> ImageAttachment
     def upload_video: (Hash[Symbol, untyped] options) -> VideoAttachment

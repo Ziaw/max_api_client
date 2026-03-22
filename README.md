@@ -170,11 +170,24 @@ bin/console
 
 Методы Ruby, доступные через `MaxApiClient::Api`:
 
+- `get_subscriptions`
+- `subscribe(url, update_types: nil, secret: nil)`
+- `unsubscribe(url)`
 - `get_updates(types = [], **extra)`
 
-Соответствующий HTTP-маршрут:
+Соответствующие HTTP-маршруты:
 
+- `GET /subscriptions`
+- `POST /subscriptions`
+- `DELETE /subscriptions`
 - `GET /updates`
+
+Типовые сценарии:
+
+- получить список активных webhook-подписок бота;
+- создать webhook-подписку на нужные типы обновлений;
+- удалить подписку по URL webhook;
+- использовать polling через `get_updates`, если webhook не нужен.
 
 ### Методы загрузки
 
