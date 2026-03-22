@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "logger"
+require "stringio"
 require "tempfile"
 
 class TestMaxApiClient < Minitest::Test
@@ -181,5 +183,24 @@ class TestMaxApiClient < Minitest::Test
       assert_equal 7, requests[1][:open_timeout]
       assert_equal 7, requests[1][:read_timeout]
     end
+  end
+
+  def test_client_logs_request_and_response_with_instance_logger
+    output = StringIO.new
+    logger = Logger.new(output)
+    logger.level = Logger::DEBUG
+    client = MaxApiClient::Client.new(
+      token: "secret-token",
+      logger:,
+      adapter: ->(_request) { { status: 200, data: { "ok" => true }, headers: { "content-type" => ["application/json"] } } }
+    )
+
+    client.call(method: :get, path: "/me")
+
+    logs = output.string
+    assert_includes logs, "max_api_client.request"
+    assert_includes logs, "max_api_client.response"
+    assert_includes logs, "[FILTERED]"
+    refute_includes logs, "secret-token"
   end
 end

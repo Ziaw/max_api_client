@@ -16,4 +16,7 @@ require_relative "max_api_client/api"
 
 # Root namespace for the Max Bot API Ruby client.
 module MaxApiClient
+  class << self
+    attr_accessor :logger
+  end
 end

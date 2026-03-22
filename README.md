@@ -44,6 +44,22 @@ bundle exec rake test
 bin/console
 ```
 
+## Логирование
+
+Если нужен отладочный лог HTTP-обмена, можно задать глобальный логгер:
+
+```ruby
+MaxApiClient.logger = Logger.new($stdout)
+```
+
+Либо передать логгер в конкретный клиент:
+
+```ruby
+api = MaxApiClient::Api.new(token: ENV.fetch("MAX_BOT_TOKEN"), logger: Logger.new($stdout))
+```
+
+Если логгер задан, клиент пишет в `debug` данные запроса и ответа.
+
 ## Релиз
 
 Релиз публикуется через GitHub Releases и GitHub Actions.

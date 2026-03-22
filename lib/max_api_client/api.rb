@@ -5,13 +5,15 @@ module MaxApiClient
   class Api
     attr_reader :raw, :upload, :client
 
-    def initialize(token:, base_url: Client::DEFAULT_BASE_URL, adapter: nil, open_timeout: nil, read_timeout: nil)
+    def initialize(token:, base_url: Client::DEFAULT_BASE_URL, adapter: nil, open_timeout: nil, read_timeout: nil,
+                   logger: nil)
       @client = Client.new(
         token:,
         base_url:,
         adapter:,
         open_timeout:,
-        read_timeout:
+        read_timeout:,
+        logger:
       )
       @raw = RawApi.new(client)
       @upload = Upload.new(self)

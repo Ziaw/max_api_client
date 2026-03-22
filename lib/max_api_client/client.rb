@@ -14,12 +14,13 @@ module MaxApiClient
 
     attr_reader :token, :base_url
 
-    def initialize(token:, base_url: DEFAULT_BASE_URL, adapter: nil, open_timeout: nil, read_timeout: nil)
+    def initialize(token:, base_url: DEFAULT_BASE_URL, adapter: nil, open_timeout: nil, read_timeout: nil, logger: nil)
       @token = token
       @base_url = base_url
       @adapter = adapter
       @open_timeout = open_timeout
       @read_timeout = read_timeout
+      @logger = logger || MaxApiClient.logger
     end
 
     # rubocop:disable Metrics/ParameterLists
@@ -39,9 +40,12 @@ module MaxApiClient
         read_timeout:
       )
 
-      return @adapter.call(request) if @adapter
+      log_debug("max_api_client.request", loggable_request(request))
 
-      perform_request(request)
+      response = @adapter ? @adapter.call(request) : perform_request(request)
+
+      log_debug("max_api_client.response", loggable_response(response))
+      response
     end
     # rubocop:enable Metrics/ParameterLists
 
@@ -145,6 +149,28 @@ module MaxApiClient
       return {} if body.empty?
 
       JSON.parse(body)
+    end
+
+    def log_debug(message, payload)
+      @logger&.debug("#{message} #{payload.inspect}")
+    end
+
+    def loggable_request(request)
+      request.merge(
+        headers: mask_headers(request[:headers]),
+        url: request[:url].to_s
+      )
+    end
+
+    def loggable_response(response)
+      response.merge(headers: mask_headers(response[:headers]))
+    end
+
+    def mask_headers(headers)
+      headers.to_h.dup.tap do |result|
+        result["Authorization"] = "[FILTERED]" if result.key?("Authorization")
+        result["authorization"] = "[FILTERED]" if result.key?("authorization")
+      end
     end
   end
 end

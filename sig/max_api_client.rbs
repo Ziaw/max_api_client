@@ -1,5 +1,8 @@
 module MaxApiClient
   VERSION: String
+  @logger: untyped
+  def self.logger: () -> untyped
+  def self.logger=: (untyped logger) -> untyped
 
   class Error < StandardError
   end
@@ -15,7 +18,7 @@ module MaxApiClient
     DEFAULT_BASE_URL: String
     attr_reader token: String
     attr_reader base_url: String
-    def initialize: (token: String, ?base_url: String, ?adapter: untyped, ?open_timeout: Numeric?, ?read_timeout: Numeric?) -> void
+    def initialize: (token: String, ?base_url: String, ?adapter: untyped, ?open_timeout: Numeric?, ?read_timeout: Numeric?, ?logger: untyped) -> void
     def call: (method: Symbol | String, ?path: String?, ?query: untyped, ?body: untyped, ?path_params: untyped, ?headers: untyped, ?url: String?, ?raw_body: untyped, ?parse_json: bool) -> Hash[Symbol, untyped]
   end
 
@@ -108,7 +111,7 @@ module MaxApiClient
     attr_reader raw: RawApi
     attr_reader upload: Upload
     attr_reader client: Client
-    def initialize: (token: String, ?base_url: String, ?adapter: untyped, ?open_timeout: Numeric?, ?read_timeout: Numeric?) -> void
+    def initialize: (token: String, ?base_url: String, ?adapter: untyped, ?open_timeout: Numeric?, ?read_timeout: Numeric?, ?logger: untyped) -> void
     def get_my_info: () -> untyped
     def edit_my_info: (untyped extra) -> untyped
     def set_my_commands: (Array[untyped] commands) -> untyped
