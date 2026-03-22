@@ -1,6 +1,7 @@
 module MaxApiClient
   VERSION: String
   @logger: untyped
+  type bot_command = Hash[Symbol | String, untyped]
   def self.logger: () -> untyped
   def self.logger=: (untyped logger) -> untyped
 
@@ -71,7 +72,7 @@ module MaxApiClient
     def get_subscriptions: () -> untyped
     def subscribe: (url: String, ?update_types: Array[String] | String?, ?secret: String?) -> untyped
     def unsubscribe: (url: String) -> untyped
-    def get_updates: (?limit: Integer?, ?timeout: Integer?, ?marker: Integer?, ?types: String?) -> untyped
+    def get_updates: (?limit: Integer?, ?timeout: Integer?, ?marker: Integer?, ?types: String?, ?read_timeout: Numeric?) -> untyped
   end
 
   class UploadsApi
@@ -107,6 +108,17 @@ module MaxApiClient
     def initialize: (Api) -> void
   end
 
+  class Polling
+    DEFAULT_TIMEOUT: Integer
+    DEFAULT_RETRY_INTERVAL: Integer
+    READ_TIMEOUT_PADDING: Integer
+    def initialize: (Api api, ?types: Array[String] | String, ?marker: Integer?, ?timeout: Integer, ?retry_interval: Integer, ?read_timeout: Numeric?) -> void
+    def each: () { (untyped update) -> void } -> self
+    def each: () -> Enumerator[untyped, self]
+    def stop: () -> bool
+    def stopped?: () -> bool
+  end
+
   class Api
     attr_reader raw: RawApi
     attr_reader upload: Upload
@@ -114,7 +126,7 @@ module MaxApiClient
     def initialize: (token: String, ?base_url: String, ?adapter: untyped, ?open_timeout: Numeric?, ?read_timeout: Numeric?, ?logger: untyped) -> void
     def get_my_info: () -> untyped
     def edit_my_info: (untyped extra) -> untyped
-    def set_my_commands: (Array[untyped] commands) -> untyped
+    def set_my_commands: (Array[bot_command] commands) -> untyped
     def delete_my_commands: () -> untyped
     def get_all_chats: (?untyped extra) -> untyped
     def get_chat: (Integer chat_id) -> untyped
@@ -140,7 +152,8 @@ module MaxApiClient
     def get_subscriptions: () -> untyped
     def subscribe: (String url, ?update_types: Array[String] | String?, ?secret: String?) -> untyped
     def unsubscribe: (String url) -> untyped
-    def get_updates: (?Array[String] | String types, ?limit: Integer?, ?timeout: Integer?, ?marker: Integer?) -> untyped
+    def poll_updates: (?Array[String] | String types, ?marker: Integer?, ?timeout: Integer, ?retry_interval: Integer, ?read_timeout: Numeric?) { (untyped update) -> void } -> Polling
+    def poll_updates: (?Array[String] | String types, ?marker: Integer?, ?timeout: Integer, ?retry_interval: Integer, ?read_timeout: Numeric?) -> Enumerator[untyped, Polling]
     def upload_image: (Hash[Symbol, untyped] options) -> ImageAttachment
     def upload_video: (Hash[Symbol, untyped] options) -> VideoAttachment
     def upload_audio: (Hash[Symbol, untyped] options) -> AudioAttachment

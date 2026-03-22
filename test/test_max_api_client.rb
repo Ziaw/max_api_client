@@ -38,7 +38,7 @@ class TestMaxApiClient < Minitest::Test
       get_chat_membership get_chat_admins add_chat_members get_chat_members remove_chat_member
       get_pinned_message pin_message unpin_message send_action leave_chat
       send_message_to_chat send_message_to_user get_messages get_message edit_message delete_message
-      answer_on_callback get_subscriptions subscribe unsubscribe get_updates
+      answer_on_callback get_subscriptions subscribe unsubscribe poll_updates
       upload_image upload_video upload_audio upload_file
     ].each do |method_name|
       assert_respond_to api, method_name
@@ -87,10 +87,30 @@ class TestMaxApiClient < Minitest::Test
     assert_equal({ text: "Hello", format: "markdown" }, requests.first[:body])
   end
 
-  def test_get_updates_joins_types_like_ts_api
+  def test_poll_updates_tracks_marker_between_requests
+    api, requests = build_api([
+                                { status: 200, data: { "updates" => [], "marker" => 10 } },
+                                { status: 200, data: { "updates" => [{ "update_type" => "message_created" }], "marker" => 11 } }
+                              ])
+    poller = MaxApiClient::Polling.new(api, types: %w[message_created], timeout: 20)
+    updates = []
+
+    poller.each do |update|
+      updates << update
+      poller.stop
+    end
+
+    assert_equal [{ "update_type" => "message_created" }], updates
+    assert_equal URI("https://platform-api.max.ru/updates?types=message_created&timeout=20"), requests[0][:url]
+    assert_equal URI("https://platform-api.max.ru/updates?types=message_created&marker=10&timeout=20"), requests[1][:url]
+    assert_equal 25, requests[0][:read_timeout]
+    assert_equal 25, requests[1][:read_timeout]
+  end
+
+  def test_raw_get_updates_remains_available
     api, requests = build_api([{ status: 200, data: { "updates" => [] } }])
 
-    api.get_updates(%w[message_created bot_started], marker: 42)
+    api.raw.subscriptions.get_updates(types: "message_created,bot_started", marker: 42)
 
     assert_equal URI("https://platform-api.max.ru/updates?types=message_created%2Cbot_started&marker=42"),
                  requests.first[:url]

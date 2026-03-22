@@ -135,8 +135,20 @@ module MaxApiClient
       raw.subscriptions.unsubscribe(url:)
     end
 
-    def get_updates(types = [], **extra)
-      raw.subscriptions.get_updates(types: normalize_types(types), **extra)
+    def poll_updates(types = [], marker: nil, timeout: Polling::DEFAULT_TIMEOUT,
+                     retry_interval: Polling::DEFAULT_RETRY_INTERVAL, read_timeout: nil, &block)
+      poller = Polling.new(
+        self,
+        types:,
+        marker:,
+        timeout:,
+        retry_interval:,
+        read_timeout:
+      )
+
+      return poller.each unless block
+
+      poller.each(&block)
     end
 
     def upload_image(options)

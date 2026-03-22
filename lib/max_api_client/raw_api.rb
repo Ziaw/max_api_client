@@ -153,8 +153,8 @@ module MaxApiClient
       delete("subscriptions", query: { url: })
     end
 
-    def get_updates(**query)
-      get("updates", query:)
+    def get_updates(read_timeout: nil, **query)
+      get("updates", query:, read_timeout:)
     end
   end
 

@@ -10,8 +10,8 @@ module MaxApiClient
     end
 
     HTTP_METHODS.each do |name|
-      define_method(name) do |path, query: nil, body: nil, path_params: nil|
-        call_api(name, path, query:, body:, path_params:)
+      define_method(name) do |path, query: nil, body: nil, path_params: nil, open_timeout: nil, read_timeout: nil|
+        call_api(name, path, query:, body:, path_params:, open_timeout:, read_timeout:)
       end
     end
 
@@ -19,8 +19,16 @@ module MaxApiClient
 
     attr_reader :client
 
-    def call_api(http_method, path, query: nil, body: nil, path_params: nil)
-      result = client.call(method: http_method, path:, query:, body:, path_params:)
+    def call_api(http_method, path, query: nil, body: nil, path_params: nil, open_timeout: nil, read_timeout: nil)
+      result = client.call(
+        method: http_method,
+        path:,
+        query:,
+        body:,
+        path_params:,
+        open_timeout:,
+        read_timeout:
+      )
       raise ApiError.new(result[:status], result[:data]) unless result[:status] == 200
 
       result[:data]

@@ -20,70 +20,9 @@ Ruby gem для работы с Max Bot API.
 gem "max_api_client", git: "git@github.com:Ziaw/max_api_client.git"
 ```
 
-Или установите локально во время разработки:
-
 ```bash
 bundle install
-bundle exec rake install
 ```
-
-## Разработка
-
-Склонируйте репозиторий и установите зависимости:
-
-```bash
-git clone git@github.com:Ziaw/max_api_client.git
-cd max_api_client
-bundle install
-```
-
-Полезные команды:
-
-```bash
-bundle exec rake test
-bin/console
-```
-
-## Логирование
-
-Если нужен отладочный лог HTTP-обмена, можно задать глобальный логгер:
-
-```ruby
-MaxApiClient.logger = Logger.new($stdout)
-```
-
-Либо передать логгер в конкретный клиент:
-
-```ruby
-api = MaxApiClient::Api.new(token: ENV.fetch("MAX_BOT_TOKEN"), logger: Logger.new($stdout))
-```
-
-Если логгер задан, клиент пишет в `debug` данные запроса и ответа.
-
-## Релиз
-
-Релиз публикуется через GitHub Releases и GitHub Actions.
-
-Перед релизом:
-
-1. Обновите версию в `lib/max_api_client/version.rb`.
-2. Перенесите изменения из `Unreleased` в `CHANGELOG.md`.
-3. Закоммитьте изменения в `master`.
-4. В настройках репозитория добавьте секрет `RUBYGEMS_API_KEY`.
-
-Как выпустить новую версию:
-
-1. Откройте GitHub: `Releases` -> `Draft a new release`.
-2. Создайте тег в формате `vX.Y.Z`, где версия совпадает с `MaxApiClient::VERSION`.
-3. Опубликуйте релиз.
-
-После публикации workflow `.github/workflows/release.yml`:
-
-- проверит, что тег совпадает с версией gem;
-- прогонит тесты;
-- соберёт `.gem`;
-- опубликует gem в RubyGems;
-- приложит собранный `.gem` к GitHub Release.
 
 ## Справочник API
 
@@ -95,6 +34,20 @@ api = MaxApiClient::Api.new(token: ENV.fetch("MAX_BOT_TOKEN"), logger: Logger.ne
 - `edit_my_info(**extra)`
 - `set_my_commands(commands)`
 - `delete_my_commands`
+
+`set_my_commands(commands)` это короткий хелпер над `edit_my_info(commands: ...)`.
+Он принимает массив команд и отправляет его в поле `commands` профиля бота.
+
+Ожидается массив хэшей с данными команды, например:
+
+```ruby
+api.set_my_commands([
+  { name: "start", description: "Запустить бота" },
+  { name: "help", description: "Показать справку" }
+])
+```
+
+`delete_my_commands` делает то же самое, но передаёт пустой массив и тем самым очищает список команд.
 
 Соответствующие HTTP-маршруты:
 
@@ -189,7 +142,7 @@ api = MaxApiClient::Api.new(token: ENV.fetch("MAX_BOT_TOKEN"), logger: Logger.ne
 - `get_subscriptions`
 - `subscribe(url, update_types: nil, secret: nil)`
 - `unsubscribe(url)`
-- `get_updates(types = [], **extra)`
+- `poll_updates(types = [], marker: nil, timeout: 20, retry_interval: 5, read_timeout: nil, &block)`
 
 Соответствующие HTTP-маршруты:
 
@@ -203,7 +156,24 @@ api = MaxApiClient::Api.new(token: ENV.fetch("MAX_BOT_TOKEN"), logger: Logger.ne
 - получить список активных webhook-подписок бота;
 - создать webhook-подписку на нужные типы обновлений;
 - удалить подписку по URL webhook;
-- использовать polling через `get_updates`, если webhook не нужен.
+- использовать polling через `poll_updates`, если webhook не нужен.
+
+Пример long polling:
+
+```ruby
+poller = api.poll_updates(%w[message_created], timeout: 20)
+
+poller.each do |update|
+  puts update["update_type"]
+  # poller.stop if нужно остановить цикл
+end
+```
+
+`poll_updates` автоматически:
+
+- передаёт `marker` между запросами;
+- поднимает HTTP `read_timeout` выше API `timeout`;
+- повторяет запрос после временных сетевых ошибок, `429` и `5xx`.
 
 ### Методы загрузки
 
@@ -237,6 +207,50 @@ api = MaxApiClient::Api.new(token: ENV.fetch("MAX_BOT_TOKEN"), logger: Logger.ne
 - `put`
 - `patch`
 - `delete`
+
+## Логирование
+
+Если нужен отладочный лог HTTP-обмена, можно задать глобальный логгер:
+
+```ruby
+MaxApiClient.logger = Logger.new($stdout)
+```
+
+Либо передать логгер в конкретный клиент:
+
+```ruby
+api = MaxApiClient::Api.new(token: ENV.fetch("MAX_BOT_TOKEN"), logger: Logger.new($stdout))
+```
+
+Если логгер задан, клиент пишет в `debug` данные запроса и ответа.
+
+## Разработка
+
+Склонируйте репозиторий и установите зависимости:
+
+```bash
+git clone git@github.com:Ziaw/max_api_client.git
+cd max_api_client
+bundle install
+```
+
+Полезные команды:
+
+```bash
+bundle exec rake test
+bin/console
+```
+
+
+## Релиз
+
+Релиз публикуется через GitHub Releases и GitHub Actions.
+
+Перед релизом:
+
+1. Обновите версию в `lib/max_api_client/version.rb`.
+2. Перенесите изменения из `Unreleased` в `CHANGELOG.md`.
+3. Закоммитьте изменения в `master`.
 
 ## Приоритеты реализации
 
