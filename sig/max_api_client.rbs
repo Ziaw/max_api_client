@@ -66,9 +66,9 @@ module MaxApiClient
 
   class SubscriptionsApi
     def get_subscriptions: () -> untyped
-    def subscribe: (url: String, ?update_types: Array[String]?, ?secret: String?) -> untyped
+    def subscribe: (url: String, ?update_types: Array[String] | String?, ?secret: String?) -> untyped
     def unsubscribe: (url: String) -> untyped
-    def get_updates: (**untyped query) -> untyped
+    def get_updates: (?limit: Integer?, ?timeout: Integer?, ?marker: Integer?, ?types: String?) -> untyped
   end
 
   class UploadsApi
@@ -135,9 +135,9 @@ module MaxApiClient
     def delete_message: (String message_id, ?untyped extra) -> untyped
     def answer_on_callback: (String callback_id, ?untyped extra) -> untyped
     def get_subscriptions: () -> untyped
-    def subscribe: (String url, ?update_types: Array[String]?, ?secret: String?) -> untyped
+    def subscribe: (String url, ?update_types: Array[String] | String?, ?secret: String?) -> untyped
     def unsubscribe: (String url) -> untyped
-    def get_updates: (?Array[String] | String types, ?untyped extra) -> untyped
+    def get_updates: (?Array[String] | String types, ?limit: Integer?, ?timeout: Integer?, ?marker: Integer?) -> untyped
     def upload_image: (Hash[Symbol, untyped] options) -> ImageAttachment
     def upload_video: (Hash[Symbol, untyped] options) -> VideoAttachment
     def upload_audio: (Hash[Symbol, untyped] options) -> AudioAttachment
