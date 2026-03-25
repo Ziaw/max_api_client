@@ -5,6 +5,7 @@ require "logger"
 require "stringio"
 require "tempfile"
 
+# rubocop:disable Metrics/ClassLength
 class TestMaxApiClient < Minitest::Test
   def build_api(responses = [], &block)
     queue = responses.dup
@@ -88,19 +89,10 @@ class TestMaxApiClient < Minitest::Test
     assert_equal({ text: "Hello", format: "markdown" }, requests.first[:body])
   end
 
+  # rubocop:disable Metrics/AbcSize
   def test_poll_updates_tracks_marker_between_requests
-    api, requests = build_api([
-                                { status: 200, data: { "updates" => [], "marker" => 10 } },
-                                { status: 200,
-                                  data: { "updates" => [{ "update_type" => "message_created" }], "marker" => 11 } }
-                              ])
-    poller = MaxApiClient::Polling.new(api, types: %w[message_created], timeout: 20)
-    updates = []
-
-    poller.each do |update|
-      updates << update
-      poller.stop
-    end
+    api, requests = build_api(poll_updates_responses)
+    updates = poll_updates_once(api)
 
     assert_equal [{ "update_type" => "message_created" }], updates
     assert_equal URI("https://platform-api.max.ru/updates?types=message_created&timeout=20"), requests[0][:url]
@@ -109,6 +101,7 @@ class TestMaxApiClient < Minitest::Test
     assert_equal 25, requests[0][:read_timeout]
     assert_equal 25, requests[1][:read_timeout]
   end
+  # rubocop:enable Metrics/AbcSize
 
   def test_raw_get_updates_remains_available
     api, requests = build_api([{ status: 200, data: { "updates" => [] } }])
@@ -229,4 +222,26 @@ class TestMaxApiClient < Minitest::Test
     assert_includes logs, "[FILTERED]"
     refute_includes logs, "secret-token"
   end
+
+  private
+
+  def poll_updates_responses
+    [
+      { status: 200, data: { "updates" => [], "marker" => 10 } },
+      { status: 200, data: { "updates" => [{ "update_type" => "message_created" }], "marker" => 11 } }
+    ]
+  end
+
+  def poll_updates_once(api)
+    poller = MaxApiClient::Polling.new(api, types: %w[message_created], timeout: 20)
+    updates = []
+
+    poller.each do |update|
+      updates << update
+      poller.stop
+    end
+
+    updates
+  end
 end
+# rubocop:enable Metrics/ClassLength

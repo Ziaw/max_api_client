@@ -5,6 +5,7 @@ module MaxApiClient
   class Api
     attr_reader :raw, :upload, :client
 
+    # rubocop:disable Metrics/ParameterLists
     def initialize(token:, base_url: Client::DEFAULT_BASE_URL, adapter: nil, open_timeout: nil, read_timeout: nil,
                    logger: nil)
       @client = Client.new(
@@ -18,6 +19,7 @@ module MaxApiClient
       @raw = RawApi.new(client)
       @upload = Upload.new(self)
     end
+    # rubocop:enable Metrics/ParameterLists
 
     # rubocop:disable Naming/AccessorMethodName
     def get_my_info
@@ -123,9 +125,11 @@ module MaxApiClient
       raw.messages.answer_on_callback(callback_id:, **extra)
     end
 
+    # rubocop:disable Naming/AccessorMethodName
     def get_subscriptions
       raw.subscriptions.get_subscriptions
     end
+    # rubocop:enable Naming/AccessorMethodName
 
     def subscribe(url, update_types: nil, secret: nil)
       raw.subscriptions.subscribe(url:, update_types:, secret:)

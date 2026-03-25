@@ -14,6 +14,7 @@ module MaxApiClient
 
     attr_reader :token, :base_url
 
+    # rubocop:disable Metrics/ParameterLists
     def initialize(token:, base_url: DEFAULT_BASE_URL, adapter: nil, open_timeout: nil, read_timeout: nil, logger: nil)
       @token = token
       @base_url = base_url
@@ -22,6 +23,7 @@ module MaxApiClient
       @read_timeout = read_timeout
       @logger = logger || MaxApiClient.logger
     end
+    # rubocop:enable Metrics/ParameterLists
 
     # rubocop:disable Metrics/ParameterLists
     def call(method:, path: nil, query: nil, body: nil, path_params: nil, headers: nil, url: nil, raw_body: nil,

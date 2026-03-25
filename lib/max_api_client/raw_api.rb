@@ -141,9 +141,11 @@ module MaxApiClient
 
   # Raw update subscription endpoints.
   class SubscriptionsApi < BaseApi
+    # rubocop:disable Naming/AccessorMethodName
     def get_subscriptions
       get("subscriptions")
     end
+    # rubocop:enable Naming/AccessorMethodName
 
     def subscribe(url:, update_types: nil, secret: nil)
       post("subscriptions", body: compact_nil(url:, update_types:, secret:))

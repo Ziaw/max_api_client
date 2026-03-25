@@ -15,6 +15,7 @@ module MaxApiClient
       Errno::ECONNRESET
     ].freeze
 
+    # rubocop:disable Metrics/ParameterLists
     def initialize(api, types: [], marker: nil, timeout: DEFAULT_TIMEOUT, retry_interval: DEFAULT_RETRY_INTERVAL,
                    read_timeout: nil)
       @api = api
@@ -25,6 +26,7 @@ module MaxApiClient
       @read_timeout = read_timeout || (timeout.to_i + READ_TIMEOUT_PADDING)
       @stopped = false
     end
+    # rubocop:enable Metrics/ParameterLists
 
     def each
       return enum_for(:each) unless block_given?
