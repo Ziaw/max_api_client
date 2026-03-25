@@ -6,6 +6,7 @@ source "https://rubygems.org"
 gemspec
 
 gem "irb", "~> 1.15"
+gem "logger"
 gem "minitest", "~> 5.16"
 gem "rake", "~> 13.0"
 
