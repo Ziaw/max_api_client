@@ -73,7 +73,8 @@ class TestMaxApiClient < Minitest::Test
     api.unsubscribe("https://example.com/webhook")
 
     assert_equal :delete, requests.first[:method]
-    assert_equal URI("https://platform-api.max.ru/subscriptions?url=https%3A%2F%2Fexample.com%2Fwebhook"), requests.first[:url]
+    assert_equal URI("https://platform-api.max.ru/subscriptions?url=https%3A%2F%2Fexample.com%2Fwebhook"),
+                 requests.first[:url]
   end
 
   def test_send_message_to_chat_uses_messages_endpoint
@@ -90,7 +91,8 @@ class TestMaxApiClient < Minitest::Test
   def test_poll_updates_tracks_marker_between_requests
     api, requests = build_api([
                                 { status: 200, data: { "updates" => [], "marker" => 10 } },
-                                { status: 200, data: { "updates" => [{ "update_type" => "message_created" }], "marker" => 11 } }
+                                { status: 200,
+                                  data: { "updates" => [{ "update_type" => "message_created" }], "marker" => 11 } }
                               ])
     poller = MaxApiClient::Polling.new(api, types: %w[message_created], timeout: 20)
     updates = []
@@ -102,7 +104,8 @@ class TestMaxApiClient < Minitest::Test
 
     assert_equal [{ "update_type" => "message_created" }], updates
     assert_equal URI("https://platform-api.max.ru/updates?types=message_created&timeout=20"), requests[0][:url]
-    assert_equal URI("https://platform-api.max.ru/updates?types=message_created&marker=10&timeout=20"), requests[1][:url]
+    assert_equal URI("https://platform-api.max.ru/updates?types=message_created&marker=10&timeout=20"),
+                 requests[1][:url]
     assert_equal 25, requests[0][:read_timeout]
     assert_equal 25, requests[1][:read_timeout]
   end
@@ -212,12 +215,15 @@ class TestMaxApiClient < Minitest::Test
     client = MaxApiClient::Client.new(
       token: "secret-token",
       logger:,
-      adapter: ->(_request) { { status: 200, data: { "ok" => true }, headers: { "content-type" => ["application/json"] } } }
+      adapter: lambda { |_request|
+        { status: 200, data: { "ok" => true }, headers: { "content-type" => ["application/json"] } }
+      }
     )
 
     client.call(method: :get, path: "/me")
 
     logs = output.string
+
     assert_includes logs, "max_api_client.request"
     assert_includes logs, "max_api_client.response"
     assert_includes logs, "[FILTERED]"

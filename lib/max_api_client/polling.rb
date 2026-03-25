@@ -22,7 +22,7 @@ module MaxApiClient
       @marker = marker
       @timeout = timeout
       @retry_interval = retry_interval
-      @read_timeout = read_timeout || timeout.to_i + READ_TIMEOUT_PADDING
+      @read_timeout = read_timeout || (timeout.to_i + READ_TIMEOUT_PADDING)
       @stopped = false
     end
 
