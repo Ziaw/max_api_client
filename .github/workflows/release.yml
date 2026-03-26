@@ -5,50 +5,26 @@ on:
     types:
       - published
 
-permissions:
-  contents: write
 
 jobs:
-  release:
+  push:
+    name: Push gem to RubyGems.org
     runs-on: ubuntu-latest
 
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+    permissions:
+      id-token: write # IMPORTANT: this permission is mandatory for trusted publishing
+      contents: write # IMPORTANT: this permission is required for `rake release` to push the release tag
 
+    steps:
+      # Set up
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.4.1"
           bundler-cache: true
+          ruby-version: 4.0.1
 
-      - name: Validate release tag
-        env:
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
-        run: |
-          ruby_version="$(ruby -e 'require_relative "lib/max_api_client/version"; print MaxApiClient::VERSION')"
-          expected_tag="v${ruby_version}"
-
-          if [ "$RELEASE_TAG" != "$expected_tag" ]; then
-            echo "Release tag $RELEASE_TAG does not match gem version $expected_tag"
-            exit 1
-          fi
-
-      - name: Run test suite
-        run: bundle exec rake
-
-      - name: Build gem
-        run: gem build max_api_client.gemspec
-
-      - name: Publish to RubyGems
-        env:
-          GEM_HOST_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
-        run: gem push max_api_client-$(ruby -e 'require_relative "lib/max_api_client/version"; print MaxApiClient::VERSION').gem
-
-      - name: Upload gem artifact to GitHub release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
-        run: gh release upload "$RELEASE_TAG" max_api_client-$(ruby -e 'require_relative "lib/max_api_client/version"; print MaxApiClient::VERSION').gem --clobber
+      # Release
+      - uses: rubygems/release-gem@v1.1.4
