@@ -19,11 +19,24 @@ jobs:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
+
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
           ruby-version: 3.4.5
+
+      - name: Validate release tag
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          ruby_version="$(ruby -e 'require_relative "lib/max_api_client/version"; print MaxApiClient::VERSION')"
+          expected_tag="v${ruby_version}"
+
+          if [ "$RELEASE_TAG" != "$expected_tag" ]; then
+            echo "Release tag $RELEASE_TAG does not match gem version $expected_tag"
+            exit 1
+          fi
 
       # Release
       - uses: rubygems/release-gem@v1.1.4
