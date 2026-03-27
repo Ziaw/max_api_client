@@ -28,7 +28,7 @@ bundle install
 
 ### Методы бота
 
-Методы Ruby, доступные через `MaxApiClient::Api`:
+Методы доступные через `MaxApiClient::Api`, порт официального клиента <https://github.com/max-messenger/max-bot-api-client-ts>, названия сохранены, poller собственный:
 
 - `get_my_info`
 - `edit_my_info(**extra)`
