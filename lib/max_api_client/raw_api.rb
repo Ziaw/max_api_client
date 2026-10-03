@@ -17,6 +17,10 @@ module MaxApiClient
       @messages ||= build_api(MessagesApi)
     end
 
+    def comments
+      @comments ||= build_api(CommentsApi)
+    end
+
     def subscriptions
       @subscriptions ||= build_api(SubscriptionsApi)
     end
@@ -40,13 +44,19 @@ module MaxApiClient
     end
     # rubocop:enable Naming/AccessorMethodName
 
+    # PATCH /me is absent from the current API schema; prefer #edit_my_commands.
     def edit_my_info(**extra)
       patch("me", body: extra)
+    end
+
+    def edit_my_commands(commands:)
+      patch("me/commands", body: { commands: })
     end
   end
 
   # Raw chat management endpoints.
   class ChatsApi < BaseApi
+    # GET /chats is no longer supported by the API since June 2026.
     def get_all(**extra)
       get("chats", query: extra)
     end
@@ -55,6 +65,7 @@ module MaxApiClient
       get("chats/{chat_id}", path_params: { chat_id: })
     end
 
+    # Lookup by public link is absent from the current API schema.
     def get_by_link(chat_link:)
       get("chats/{chat_link}", path_params: { chat_link: })
     end
@@ -71,6 +82,15 @@ module MaxApiClient
       get("chats/{chat_id}/members/admins", path_params: { chat_id: })
     end
 
+    def add_chat_admins(chat_id:, admins:)
+      post("chats/{chat_id}/members/admins", path_params: { chat_id: }, body: { admins: })
+    end
+
+    def remove_chat_admin(chat_id:, user_id:)
+      delete("chats/{chat_id}/members/admins/{user_id}", path_params: { chat_id:, user_id: })
+    end
+
+    # POST /chats/{chat_id}/members was removed from the API on 2026-09-30.
     def add_chat_members(chat_id:, user_ids:)
       post("chats/{chat_id}/members", path_params: { chat_id: }, body: { user_ids: })
     end
@@ -80,7 +100,7 @@ module MaxApiClient
     end
 
     def remove_chat_member(chat_id:, user_id:, block: nil)
-      delete("chats/{chat_id}/members", path_params: { chat_id: }, body: compact_nil(user_id:, block:))
+      delete("chats/{chat_id}/members", path_params: { chat_id: }, query: compact_nil(user_id:, block:))
     end
 
     def get_pinned_message(chat_id:)
@@ -108,22 +128,30 @@ module MaxApiClient
   class MessagesApi < BaseApi
     ATTACHMENT_NOT_READY_CODE = "attachment.not.ready"
     ATTACHMENT_NOT_READY_DELAY = 1
+    ATTACHMENT_NOT_READY_RETRIES = 3
 
     def get(**query)
       super("messages", query:)
     end
 
     def get_by_id(message_id:)
-      get("messages/{message_id}", path_params: { message_id: })
+      call_api(:get, "messages/{message_id}", path_params: { message_id: })
     end
 
     def send(chat_id: nil, user_id: nil, disable_link_preview: nil, **body)
-      post("messages", query: compact_nil(chat_id:, user_id:, disable_link_preview:), body:)
-    rescue ApiError => e
-      raise unless e.code == ATTACHMENT_NOT_READY_CODE
+      attempt = 0
 
-      sleep(ATTACHMENT_NOT_READY_DELAY)
-      send(chat_id:, user_id:, disable_link_preview:, **body)
+      begin
+        post("messages", query: compact_nil(chat_id:, user_id:, disable_link_preview:), body:)
+      rescue ApiError => e
+        raise unless e.code == ATTACHMENT_NOT_READY_CODE
+
+        attempt += 1
+        raise if attempt >= ATTACHMENT_NOT_READY_RETRIES
+
+        sleep(ATTACHMENT_NOT_READY_DELAY * (2**(attempt - 1)))
+        retry
+      end
     end
 
     def edit(message_id:, **body)
@@ -134,8 +162,36 @@ module MaxApiClient
       super("messages", query: { message_id: })
     end
 
-    def answer_on_callback(callback_id:, **body)
-      post("answers", query: { callback_id: }, body:)
+    def get_video_info(video_token:)
+      call_api(:get, "videos/{video_token}", path_params: { video_token: })
+    end
+
+    def answer_on_callback(callback_id:, disable_link_preview: nil, **body)
+      post("answers", query: compact_nil(callback_id:, disable_link_preview:), body:)
+    end
+  end
+
+  # Raw endpoints for comments under channel posts.
+  class CommentsApi < BaseApi
+    def get(message_id:, **query)
+      super("messages/{message_id}/comments", path_params: { message_id: }, query:)
+    end
+
+    def get_by_id(message_id:, comment_id:)
+      call_api(:get, "messages/{message_id}/comments/{comment_id}", path_params: { message_id:, comment_id: })
+    end
+
+    def send(message_id:, disable_link_preview: nil, **body)
+      post("messages/{message_id}/comments", path_params: { message_id: },
+                                             query: compact_nil(disable_link_preview:), body:)
+    end
+
+    def edit(message_id:, comment_id:, **body)
+      put("messages/{message_id}/comments", path_params: { message_id: }, query: { comment_id: }, body:)
+    end
+
+    def delete(message_id:, comment_id:)
+      super("messages/{message_id}/comments", path_params: { message_id: }, query: { comment_id: })
     end
   end
 

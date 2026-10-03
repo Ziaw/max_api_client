@@ -6,6 +6,10 @@ module MaxApiClient
     def to_h
       raise NotImplementedError, "#{self.class} must implement #to_h"
     end
+
+    def to_json(*args)
+      to_h.to_json(*args)
+    end
   end
 
   # Shared attachment implementation for upload-backed media objects.
@@ -105,7 +109,71 @@ module MaxApiClient
     end
 
     def to_h
-      { type: "share", payload: { url:, token: } }
+      { type: "share", payload: { url:, token: }.compact }
+    end
+  end
+
+  # Attachment wrapper for contact cards.
+  class ContactAttachment < Attachment
+    attr_reader :name, :contact_id, :vcf_info, :vcf_phone
+
+    def initialize(name: nil, contact_id: nil, vcf_info: nil, vcf_phone: nil)
+      super()
+      @name = name
+      @contact_id = contact_id
+      @vcf_info = vcf_info
+      @vcf_phone = vcf_phone
+    end
+
+    def to_h
+      { type: "contact", payload: { name:, contact_id:, vcf_info:, vcf_phone: }.compact }
+    end
+  end
+
+  # Attachment wrapper for an inline keyboard: an array of button rows.
+  class InlineKeyboardAttachment < Attachment
+    attr_reader :buttons
+
+    def initialize(buttons:)
+      super()
+      @buttons = buttons
+    end
+
+    def to_h
+      { type: "inline_keyboard", payload: { buttons: } }
+    end
+  end
+
+  # Builders for inline keyboard buttons.
+  module Button
+    module_function
+
+    def callback(text, payload)
+      { type: "callback", text:, payload: }
+    end
+
+    def link(text, url)
+      { type: "link", text:, url: }
+    end
+
+    def message(text)
+      { type: "message", text: }
+    end
+
+    def request_contact(text)
+      { type: "request_contact", text: }
+    end
+
+    def request_geo_location(text, quick: nil)
+      { type: "request_geo_location", text:, quick: }.compact
+    end
+
+    def open_app(text, web_app, payload: nil, contact_id: nil)
+      { type: "open_app", text:, web_app:, payload:, contact_id: }.compact
+    end
+
+    def clipboard(text, payload)
+      { type: "clipboard", text:, payload: }
     end
   end
 end

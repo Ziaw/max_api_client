@@ -86,7 +86,7 @@ module MaxApiClient
 
       params = URI.decode_www_form(String(uri.query))
       query.to_h.each do |key, value|
-        next if value.nil? || value == false
+        next if value.nil?
 
         params << [key.to_s, value.to_s]
       end

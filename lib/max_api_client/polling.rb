@@ -16,11 +16,12 @@ module MaxApiClient
     ].freeze
 
     # rubocop:disable Metrics/ParameterLists
-    def initialize(api, types: [], marker: nil, timeout: DEFAULT_TIMEOUT, retry_interval: DEFAULT_RETRY_INTERVAL,
-                   read_timeout: nil)
+    def initialize(api, types: [], marker: nil, limit: nil, timeout: DEFAULT_TIMEOUT,
+                   retry_interval: DEFAULT_RETRY_INTERVAL, read_timeout: nil)
       @api = api
       @types = types
       @marker = marker
+      @limit = limit
       @timeout = timeout
       @retry_interval = retry_interval
       @read_timeout = read_timeout || (timeout.to_i + READ_TIMEOUT_PADDING)
@@ -63,12 +64,13 @@ module MaxApiClient
 
     private
 
-    attr_reader :api, :types, :marker, :timeout, :retry_interval, :read_timeout
+    attr_reader :api, :types, :marker, :limit, :timeout, :retry_interval, :read_timeout
 
     def fetch_updates
       api.raw.subscriptions.get_updates(
         types: normalize_types(types),
         marker:,
+        limit:,
         timeout:,
         read_timeout:
       )
@@ -87,9 +89,9 @@ module MaxApiClient
     end
 
     def normalize_types(value)
-      return value.join(",") if value.is_a?(Array)
+      value = value.join(",") if value.is_a?(Array)
 
-      value
+      value unless value.to_s.empty?
     end
   end
 end

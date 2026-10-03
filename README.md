@@ -104,12 +104,15 @@ api = MaxApiClient::Api.new(
 Методы доступные через `MaxApiClient::Api`, порт официального клиента <https://github.com/max-messenger/max-bot-api-client-ts>, названия сохранены, poller собственный:
 
 - `get_my_info`
-- `edit_my_info(**extra)`
+- `edit_my_commands(commands)`
 - `set_my_commands(commands)`
 - `delete_my_commands`
 
-`set_my_commands(commands)` это короткий хелпер над `edit_my_info(commands: ...)`.
-Он принимает массив команд и отправляет его в поле `commands` профиля бота.
+Клиент соответствует схеме Bot API MAX версии 0.0.33
+(<https://github.com/max-messenger/api-schema>).
+
+`set_my_commands(commands)` это синоним `edit_my_commands(commands)`.
+Он принимает массив команд и отправляет его в поле `commands`.
 
 Ожидается массив хэшей с данными команды, например:
 
@@ -125,27 +128,28 @@ api.set_my_commands([
 Соответствующие HTTP-маршруты:
 
 - `GET /me`
-- `PATCH /me`
+- `PATCH /me/commands`
 
 Типовые сценарии:
 
 - получить текущий профиль бота;
-- обновить имя, описание, аватар и команды бота;
 - опубликовать или очистить подсказки команд для пользователей.
+
+Устаревший метод `edit_my_info(**extra)` (`PATCH /me`) оставлен для совместимости
+и выводит предупреждение: этого маршрута нет в актуальной схеме API.
 
 ### Методы чатов
 
 Методы Ruby, доступные через `MaxApiClient::Api`:
 
-- `get_all_chats(**extra)`
 - `get_chat(chat_id)`
-- `get_chat_by_link(chat_link)`
 - `edit_chat_info(chat_id, **extra)`
 - `get_chat_membership(chat_id)`
 - `get_chat_admins(chat_id)`
-- `add_chat_members(chat_id, user_ids)`
+- `add_chat_admins(chat_id, admins)`
+- `remove_chat_admin(chat_id, user_id)`
 - `get_chat_members(chat_id, **extra)`
-- `remove_chat_member(chat_id, user_id)`
+- `remove_chat_member(chat_id, user_id, block: nil)`
 - `get_pinned_message(chat_id)`
 - `pin_message(chat_id, message_id, **extra)`
 - `unpin_message(chat_id)`
@@ -154,13 +158,12 @@ api.set_my_commands([
 
 Соответствующие HTTP-маршруты:
 
-- `GET /chats`
 - `GET /chats/{chat_id}`
-- `GET /chats/{chat_link}`
 - `PATCH /chats/{chat_id}`
 - `GET /chats/{chat_id}/members/me`
 - `GET /chats/{chat_id}/members/admins`
-- `POST /chats/{chat_id}/members`
+- `POST /chats/{chat_id}/members/admins`
+- `DELETE /chats/{chat_id}/members/admins/{user_id}`
 - `GET /chats/{chat_id}/members`
 - `DELETE /chats/{chat_id}/members`
 - `GET /chats/{chat_id}/pin`
@@ -171,13 +174,28 @@ api.set_my_commands([
 
 Типовые сценарии:
 
-- получить список чатов, доступных боту;
-- найти чат по идентификатору или публичной ссылке;
+- получить чат по идентификатору;
 - изменить заголовок, иконку и метаданные чата;
 - управлять участниками и администраторами;
 - читать, устанавливать и снимать закреплённые сообщения;
 - отправлять статус набора текста и другие действия отправителя;
 - выходить из чата.
+
+Пример назначения администратора:
+
+```ruby
+api.add_chat_admins(chat_id, [
+  { user_id: 42, permissions: %w[write pin_message] }
+])
+```
+
+Устаревшие методы оставлены для совместимости и выводят предупреждение:
+
+- `get_all_chats(**extra)` — `GET /chats` не поддерживается с июня 2026;
+  список чатов нужно вести самостоятельно по событиям `bot_added` и `bot_started`;
+- `get_chat_by_link(chat_link)` — поиска по ссылке нет в актуальной схеме;
+- `add_chat_members(chat_id, user_ids)` — `POST /chats/{chat_id}/members`
+  удалён из API 30 сентября 2026.
 
 ### Методы сообщений
 
@@ -188,7 +206,8 @@ api.set_my_commands([
 - `get_messages(chat_id, **extra)`
 - `get_message(message_id)`
 - `edit_message(message_id, **extra)`
-- `delete_message(message_id, **extra)`
+- `delete_message(message_id)`
+- `get_video_info(video_token)`
 - `answer_on_callback(callback_id, **extra)`
 
 Соответствующие HTTP-маршруты:
@@ -198,6 +217,7 @@ api.set_my_commands([
 - `GET /messages/{message_id}`
 - `PUT /messages`
 - `DELETE /messages`
+- `GET /videos/{video_token}`
 - `POST /answers`
 
 Поддерживаемые возможности:
@@ -206,7 +226,25 @@ api.set_my_commands([
 - дополнительный payload для форматирования, reply-ссылок и вложений;
 - редактирование и удаление сообщений;
 - ответы на callback-кнопки;
-- автоматический повтор запроса, если вложение после загрузки ещё не готово.
+- автоматический повтор запроса (до 3 попыток), если вложение после загрузки ещё не готово.
+
+### Методы комментариев
+
+Методы Ruby, доступные через `MaxApiClient::Api`:
+
+- `get_comments(message_id, **extra)`
+- `get_comment(message_id, comment_id)`
+- `send_comment(message_id, text, **extra)`
+- `edit_comment(message_id, comment_id, **extra)`
+- `delete_comment(message_id, comment_id)`
+
+Соответствующие HTTP-маршруты:
+
+- `GET /messages/{message_id}/comments`
+- `GET /messages/{message_id}/comments/{comment_id}`
+- `POST /messages/{message_id}/comments`
+- `PUT /messages/{message_id}/comments`
+- `DELETE /messages/{message_id}/comments`
 
 ### Методы подписок
 
@@ -215,7 +253,7 @@ api.set_my_commands([
 - `get_subscriptions`
 - `subscribe(url, update_types: nil, secret: nil)`
 - `unsubscribe(url)`
-- `poll_updates(types = [], marker: nil, timeout: 20, retry_interval: 5, read_timeout: nil, &block)`
+- `poll_updates(types = [], marker: nil, limit: nil, timeout: 20, retry_interval: 5, read_timeout: nil, &block)`
 
 Соответствующие HTTP-маршруты:
 
@@ -270,6 +308,25 @@ end
 - `StickerAttachment`
 - `LocationAttachment`
 - `ShareAttachment`
+- `ContactAttachment`
+- `InlineKeyboardAttachment`
+
+Объекты вложений можно передавать в `attachments:` напрямую. Кнопки клавиатуры
+собираются через `MaxApiClient::Button`:
+
+```ruby
+keyboard = MaxApiClient::InlineKeyboardAttachment.new(
+  buttons: [[
+    MaxApiClient::Button.callback("Да", "yes"),
+    MaxApiClient::Button.link("Сайт", "https://max.ru")
+  ]]
+)
+
+api.send_message_to_chat(chat_id, "Выберите", attachments: [keyboard])
+```
+
+Доступные кнопки: `callback`, `link`, `message`, `request_contact`,
+`request_geo_location`, `open_app`, `clipboard`.
 
 ### Доступ к Raw API
 
@@ -338,6 +395,7 @@ bin/console
 ## Источники
 
 - Официальная документация Max Bot API: <https://dev.max.ru/>
+- OpenAPI-схема Max Bot API: <https://github.com/max-messenger/api-schema>
 - TypeScript reference client: <https://github.com/max-messenger/max-bot-api-client-ts>
 
 ## Лицензия
