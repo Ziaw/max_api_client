@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+- Attachment objects implement `as_json`, so ActiveSupport's `to_json` (Rails) serializes them the same as `JSON.generate` instead of dumping instance variables.
+
 ## [0.2.0] - 2026-10-03
 
 Synced with Max Bot API schema 0.0.33.

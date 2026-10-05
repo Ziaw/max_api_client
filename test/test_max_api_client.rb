@@ -292,6 +292,14 @@ class TestMaxApiClient < Minitest::Test
   end
   # rubocop:enable Metrics/AbcSize
 
+  def test_attachments_as_json_matches_to_h
+    button = MaxApiClient::Button.clipboard("Скопировать", "42")
+    keyboard = MaxApiClient::InlineKeyboardAttachment.new(buttons: [[button]])
+
+    assert_equal keyboard.to_h, keyboard.as_json
+    assert_equal({ type: "file", payload: { token: "t" } }, MaxApiClient::FileAttachment.new(token: "t").as_json)
+  end
+
   def test_pin_message_preserves_false_notify_flag
     api, requests = build_api([{ status: 200, data: {} }])
 

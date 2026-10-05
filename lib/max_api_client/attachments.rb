@@ -10,6 +10,12 @@ module MaxApiClient
     def to_json(*args)
       to_h.to_json(*args)
     end
+
+    # Encoders that go through as_json (ActiveSupport's to_json in Rails) get the same
+    # payload as JSON.generate instead of the object's instance variables.
+    def as_json(*)
+      to_h
+    end
   end
 
   # Shared attachment implementation for upload-backed media objects.
